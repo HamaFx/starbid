@@ -1,32 +1,42 @@
 import { RecoveryForm } from "@/components/recover/RecoveryForm";
+import { TerminalWindowBar } from "@/components/ui/TerminalWindowBar";
 import { LegalLinks } from "@/app/legal-links";
 import Link from "next/link";
 
 export const metadata = {
-  title: "Recover Claim Link — StarBid",
+  title: "Recover Bearer Key — StarBid",
   description: "Recover private claim tokens for your stars.",
 };
 
 export default function RecoverPage() {
   return (
-    <main className="min-h-screen bg-[#05050a] px-4 py-8 text-[#fff4e0] sm:px-6 sm:py-16">
-      <div className="mx-auto max-w-xl">
-        <Link href="/" className="font-mono text-sm text-[#4cc9f0] hover:underline">
-          ← Back to galaxy
-        </Link>
-        <p className="mt-8 font-mono text-xs uppercase tracking-[0.25em] text-[#4cc9f0]">
-          Key Recovery
-        </p>
-        <h1 className="mt-2 text-3xl font-bold tracking-tight sm:text-4xl">
-          Recover Claim Link
-        </h1>
-        <p className="mt-2 text-sm leading-relaxed text-[#8f8c96]">
-          Enter the email address provided during checkout. If a star exists for that email, a fresh manage link will be sent.
-        </p>
-        <div className="mt-8">
-          <RecoveryForm />
+    <main className="min-h-screen bg-[#07070b] p-3 text-[#f3f4f6] sm:p-6">
+      <div className="mx-auto max-w-xl space-y-4">
+        <div className="flex items-center justify-between font-mono text-xs text-[#71717a]">
+          <Link href="/" className="hover:text-[#38bdf8] transition">
+            &lt;- ~/galaxy
+          </Link>
+          <Link href="/create" className="hover:text-[#38bdf8] transition">
+            + spawn star
+          </Link>
         </div>
-        <footer className="mt-14 border-t border-white/10 pt-5">
+
+        <div className="terminal-window rounded-xl overflow-hidden font-mono">
+          <TerminalWindowBar title="starbid — auth --recover — zsh" />
+          <div className="p-4 sm:p-6 space-y-3">
+            <div>
+              <span className="text-[10px] text-[#52525b]">RECOVERY_DISPATCH</span>
+              <h1 className="text-lg font-bold text-[#f3f4f6] mt-0.5">Recover Bearer Key</h1>
+              <p className="text-[11px] text-[#71717a] mt-1">
+                Enter your payment receipt email to receive your star management link.
+              </p>
+            </div>
+
+            <RecoveryForm />
+          </div>
+        </div>
+
+        <footer className="pt-4">
           <LegalLinks />
         </footer>
       </div>

@@ -41,66 +41,82 @@ export function LeaderboardDrawer({
     <div
       role="dialog"
       aria-modal="true"
-      aria-labelledby="drawer-title"
-      className="fixed inset-0 z-50 flex justify-end bg-black/60 backdrop-blur-sm"
+      className="fixed inset-0 z-50 flex justify-end bg-black/50 backdrop-blur-xs"
       onClick={onClose}
     >
       <div
-        className="flex h-full w-full max-w-md flex-col border-l border-white/10 bg-[#0a0a14]/95 p-5 shadow-2xl backdrop-blur-xl sm:p-6"
+        className="flex h-full w-full max-w-md flex-col border-l border-white/[0.08] bg-[#0c0c12] p-4 font-mono shadow-2xl sm:p-5"
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Header */}
-        <div className="flex items-center justify-between border-b border-white/10 pb-4">
-          <div>
-            <span className="font-mono text-xs uppercase tracking-wider text-[#4cc9f0]">Orbital Rankings</span>
-            <h2 id="drawer-title" className="text-xl font-bold text-[#fff4e0]">Live Leaderboard</h2>
+        {/* Terminal Header */}
+        <div className="flex items-center justify-between border-b border-white/[0.08] pb-3 text-xs">
+          <div className="flex items-center gap-2">
+            <span className="text-[#38bdf8]">$</span>
+            <span className="font-semibold text-[#f3f4f6]">top --gravity</span>
+            <span className="text-[#52525b]">({sorted.length} entries)</span>
           </div>
-          <button type="button" onClick={onClose} aria-label="Close drawer" className="flex h-8 w-8 items-center justify-center rounded-lg border border-white/10 bg-white/5 font-mono text-sm text-[#8f8c96] hover:text-[#fff4e0]">
-            ✕
+          <button type="button" onClick={onClose} className="rounded px-1.5 py-0.5 text-xs text-[#71717a] hover:text-[#f3f4f6]">
+            [esc]
           </button>
         </div>
 
-        {/* Search & Filters */}
-        <div className="mt-4 space-y-2.5">
-          <input
-            type="search"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search projects or @handles…"
-            className="w-full rounded-xl border border-white/10 bg-[#05050a] px-3.5 py-2 text-xs text-[#fff4e0] outline-none focus:border-[#4cc9f0]"
-          />
-          <div className="flex gap-1.5">
+        {/* Filter / Search Bar */}
+        <div className="mt-3 space-y-2">
+          <div className="flex items-center gap-2 rounded border border-white/[0.08] bg-[#07070b] px-2.5 py-1.5 text-xs">
+            <span className="text-[#52525b]">grep:</span>
+            <input
+              type="search"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="pattern..."
+              className="flex-1 bg-transparent text-[#f3f4f6] outline-none placeholder-[#52525b]"
+            />
+          </div>
+
+          <div className="flex gap-1 text-[11px]">
             {(["all", "top5", "founding"] as const).map((m) => (
-              <button key={m} type="button" onClick={() => setFilter(m)} className={`rounded-lg px-2.5 py-1 font-mono text-xs transition ${filter === m ? "bg-[#4cc9f0] font-semibold text-[#05050a]" : "border border-white/10 bg-[#05050a] text-[#8f8c96] hover:text-[#fff4e0]"}`}>
-                {m === "all" ? "All Orbits" : m === "top5" ? "Top 5" : "Founding"}
+              <button
+                key={m}
+                type="button"
+                onClick={() => setFilter(m)}
+                className={`rounded px-2 py-0.5 transition ${
+                  filter === m ? "bg-white/10 text-[#38bdf8]" : "text-[#52525b] hover:text-[#71717a]"
+                }`}
+              >
+                --{m}
               </button>
             ))}
           </div>
         </div>
 
-        {/* Scrollable Star List */}
-        <ol className="mt-4 flex-1 space-y-2 overflow-y-auto pr-1">
+        {/* Table Rows */}
+        <div className="mt-3 flex-1 overflow-y-auto pr-1 text-xs">
+          <div className="grid grid-cols-[36px_1fr_auto] gap-2 border-b border-white/[0.04] py-1 text-[10px] text-[#52525b]">
+            <span>RNK</span>
+            <span>PROJECT</span>
+            <span className="text-right">GRAVITY</span>
+          </div>
+
           {sorted.map((star, idx) => (
-            <li
+            <div
               key={star.id}
               onClick={() => { onSelectStar(star, idx + 1); onClose(); }}
-              className="group cursor-pointer rounded-xl border border-white/5 bg-[#05050a] p-3 transition hover:border-[#4cc9f0]/40 hover:bg-[#0f0f1c]"
+              className="grid grid-cols-[36px_1fr_auto] gap-2 border-b border-white/[0.04] py-2 transition hover:bg-white/[0.02] cursor-pointer"
             >
-              <div className="flex items-center justify-between gap-2.5">
-                <div className="flex items-center gap-2.5">
-                  <span className="font-mono text-xs font-semibold text-[#8f8c96]">#{String(idx + 1).padStart(2, "0")}</span>
-                  <span className="truncate text-sm font-medium text-[#fff4e0] group-hover:text-[#4cc9f0]">{star.name}</span>
-                </div>
-                <span className="font-mono text-xs font-bold text-[#ffb627]">${(star.totalBidCents / 100).toFixed(2)}</span>
+              <span className="text-[#71717a]">#{String(idx + 1).padStart(2, "0")}</span>
+              <div className="truncate text-[#f3f4f6] hover:text-[#38bdf8]">
+                {star.name}
+                {star.isFounding && <span className="ml-1 text-[9px] text-[#fbbf24]">[F]</span>}
               </div>
-            </li>
+              <span className="text-right font-semibold text-[#fbbf24]">${(star.totalBidCents / 100).toFixed(2)}</span>
+            </div>
           ))}
-        </ol>
+        </div>
 
         {/* Footer */}
-        <div className="mt-4 border-t border-white/10 pt-3">
-          <Link href="/leaderboard" className="block text-center font-mono text-xs text-[#4cc9f0] hover:underline">
-            Open Full Leaderboard Page →
+        <div className="mt-3 border-t border-white/[0.08] pt-2 text-[11px]">
+          <Link href="/leaderboard" className="text-[#71717a] hover:text-[#38bdf8]">
+            &gt; view full matrix table
           </Link>
         </div>
       </div>

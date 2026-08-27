@@ -11,28 +11,28 @@ export function FloatingTicker({ initialStars = [] }: { initialStars?: Star[] })
 
   return (
     <div
-      aria-label="Live orbit activity feed"
-      className="pointer-events-auto flex max-w-sm items-center gap-2.5 rounded-xl border border-white/10 bg-[#05050a]/80 px-3.5 py-2 text-xs shadow-lg backdrop-blur-md"
+      aria-label="Terminal log stream"
+      className="pointer-events-auto flex max-w-md items-center gap-2 rounded border border-white/[0.08] bg-[#0c0c12]/90 px-3 py-1.5 font-mono text-[11px] backdrop-blur-md"
     >
-      <span className="flex shrink-0 items-center gap-1.5 font-mono text-[10px] uppercase text-[#4ade80]">
-        <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-[#4ade80]" />
-        Live
-      </span>
+      <span className="text-[#38bdf8]">&gt;</span>
 
-      <div className="flex-1 truncate font-mono text-[11px] text-[#fff4e0]">
+      <div className="flex-1 truncate text-[#71717a]">
         {recentEvents.length > 0 ? (
           <span className="truncate">
-            <strong className={recentEvents[0].eventType === "singularity_takeover" ? "text-[#ffb627]" : "text-[#4cc9f0]"}>
-              {recentEvents[0].eventType === "singularity_takeover" ? "⚡ TAKEOVER: " : "▲ FUEL: "}
-            </strong>
-            {recentEvents[0].name} (${(recentEvents[0].totalBidCents / 100).toFixed(2)})
+            <span className={recentEvents[0].eventType === "singularity_takeover" ? "text-[#fbbf24] font-semibold" : "text-[#27c93f]"}>
+              [{recentEvents[0].eventType === "singularity_takeover" ? "TAKEOVER" : "FUEL"}]
+            </span>{" "}
+            <span className="text-[#f3f4f6]">{recentEvents[0].name}</span>{" "}
+            <span className="text-[#fbbf24]">${(recentEvents[0].totalBidCents / 100).toFixed(2)}</span>
           </span>
         ) : activeStars.length > 0 ? (
           <span className="truncate">
-            <strong className="text-[#ffb627]">👑 #1 {activeStars[0].name}</strong> (${(activeStars[0].totalBidCents / 100).toFixed(2)})
+            <span className="text-[#27c93f]">[ACTIVE]</span>{" "}
+            <span className="text-[#f3f4f6]">#01 {activeStars[0].name}</span>{" "}
+            <span className="text-[#fbbf24]">${(activeStars[0].totalBidCents / 100).toFixed(2)}</span>
           </span>
         ) : (
-          <span>Awaiting orbital signals…</span>
+          <span>tail -f /dev/orbit.log</span>
         )}
       </div>
     </div>

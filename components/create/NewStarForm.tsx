@@ -34,8 +34,8 @@ export function NewStarForm() {
         turnstileToken,
       });
       setCheckout(result);
-    } catch (submissionError) {
-      setError(submissionError instanceof Error ? submissionError.message : "Unable to start checkout");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Unable to start checkout");
     } finally {
       setLoading(false);
     }
@@ -44,66 +44,60 @@ export function NewStarForm() {
   if (checkout) return <CheckoutFlow checkoutUrl={checkout.checkoutUrl} pendingBidId={checkout.pendingBidId} rawToken={checkout.rawToken} />;
   if (!paymentsConfigured && !devPayment) {
     return (
-      <div className="rounded-2xl border border-white/10 bg-[#0a0a14] p-5">
-        <p className="font-mono text-xs uppercase tracking-wider text-[#ffb627]">Payments Inactive</p>
-        <p className="mt-2 text-sm leading-relaxed text-[#8f8c96]">
-          Live fiat checkouts are temporarily paused while store onboarding is completed.
-        </p>
+      <div className="rounded border border-white/[0.08] bg-[#07070b] p-4 font-mono text-xs">
+        <p className="text-[#fbbf24]">[STATUS] PAYMENTS_OFFLINE</p>
+        <p className="mt-1 text-[#71717a]">Live checkouts are temporarily paused while store credentials are initialized.</p>
       </div>
     );
   }
 
   return (
-    <form onSubmit={submit} className="space-y-4">
-      {/* Live Preview Card */}
+    <form onSubmit={submit} className="space-y-4 font-mono text-xs">
       {projectName && (
-        <div className="flex items-center justify-between rounded-xl border border-[#4cc9f0]/30 bg-[#05050a] p-3 text-xs">
-          <span className="text-[#8f8c96]">Preview in Orbit:</span>
-          <span className="font-medium text-[#fff4e0]">{projectName}</span>
-          <span className="font-mono text-[#ffb627]">${bidDollars.toFixed(2)}</span>
+        <div className="flex items-center justify-between rounded border border-[#38bdf8]/40 bg-[#38bdf8]/5 p-2.5">
+          <span className="text-[#71717a]">preview:</span>
+          <span className="font-semibold text-[#f3f4f6]">{projectName}</span>
+          <span className="text-[#fbbf24]">${bidDollars.toFixed(2)}</span>
         </div>
       )}
 
       <div>
-        <label htmlFor="create-name" className="block font-mono text-xs text-[#8f8c96]">Project Name *</label>
-        <input id="create-name" name="name" type="text" required maxLength={60} value={projectName} onChange={(e) => setProjectName(e.target.value)} placeholder="e.g. NOVA LABS" className="mt-1 w-full rounded-xl border border-white/10 bg-[#0a0a14] px-4 py-3 text-sm outline-none focus:border-[#4cc9f0]" />
+        <label htmlFor="create-name" className="block text-[#71717a]">PROJECT_NAME *</label>
+        <input id="create-name" name="name" type="text" required maxLength={60} value={projectName} onChange={(e) => setProjectName(e.target.value)} placeholder="e.g. NOVA LABS" className="mt-1 w-full rounded border border-white/[0.08] bg-[#07070b] px-3 py-2 text-xs text-[#f3f4f6] outline-none focus:border-[#38bdf8]" />
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-2">
+      <div className="grid gap-3 sm:grid-cols-2">
         <div>
-          <label htmlFor="create-link_url" className="block font-mono text-xs text-[#8f8c96]">Destination URL *</label>
-          <input id="create-link_url" name="link_url" type="url" required placeholder="https://yourproject.com" className="mt-1 w-full rounded-xl border border-white/10 bg-[#0a0a14] px-4 py-3 text-sm outline-none focus:border-[#4cc9f0]" />
+          <label htmlFor="create-link_url" className="block text-[#71717a]">TARGET_URL *</label>
+          <input id="create-link_url" name="link_url" type="url" required placeholder="https://..." className="mt-1 w-full rounded border border-white/[0.08] bg-[#07070b] px-3 py-2 text-xs text-[#f3f4f6] outline-none focus:border-[#38bdf8]" />
         </div>
         <div>
-          <label htmlFor="create-x_handle" className="block font-mono text-xs text-[#8f8c96]">X / Twitter Handle (optional)</label>
-          <input id="create-x_handle" name="x_handle" type="text" placeholder="@handle" className="mt-1 w-full rounded-xl border border-white/10 bg-[#0a0a14] px-4 py-3 text-sm outline-none focus:border-[#4cc9f0]" />
+          <label htmlFor="create-x_handle" className="block text-[#71717a]">X_HANDLE (optional)</label>
+          <input id="create-x_handle" name="x_handle" type="text" placeholder="@handle" className="mt-1 w-full rounded border border-white/[0.08] bg-[#07070b] px-3 py-2 text-xs text-[#f3f4f6] outline-none focus:border-[#38bdf8]" />
         </div>
       </div>
 
       <div>
-        <label htmlFor="create-email" className="block font-mono text-xs text-[#8f8c96]">Receipt &amp; Recovery Email *</label>
-        <input id="create-email" name="email" type="email" required placeholder="you@example.com" className="mt-1 w-full rounded-xl border border-white/10 bg-[#0a0a14] px-4 py-3 text-sm outline-none focus:border-[#4cc9f0]" />
-        <p className="mt-1 text-[11px] text-[#8f8c96]">Used only for payment receipts and private claim link recovery.</p>
+        <label htmlFor="create-email" className="block text-[#71717a]">RECOVERY_EMAIL *</label>
+        <input id="create-email" name="email" type="email" required placeholder="you@domain.com" className="mt-1 w-full rounded border border-white/[0.08] bg-[#07070b] px-3 py-2 text-xs text-[#f3f4f6] outline-none focus:border-[#38bdf8]" />
       </div>
 
-      {/* Opening Bid Amount & Presets */}
       <div>
-        <label htmlFor="create-amount" className="block font-mono text-xs text-[#8f8c96]">Opening Bid ($ USD, min $3) *</label>
-        <div className="mt-2 flex flex-wrap gap-2">
-          {BID_PRESETS.map((amount) => (
-            <button key={amount} type="button" onClick={() => setBidDollars(amount)} className={`rounded-lg px-3 py-1.5 font-mono text-xs transition ${bidDollars === amount ? "bg-[#4cc9f0] font-semibold text-[#05050a]" : "border border-white/10 bg-[#0a0a14] text-[#8f8c96] hover:text-[#fff4e0]"}`}>
-              ${amount}
+        <label htmlFor="create-amount" className="block text-[#71717a]">OPENING_BID ($ USD, min $3) *</label>
+        <div className="mt-1.5 flex flex-wrap gap-1.5">
+          {BID_PRESETS.map((amt) => (
+            <button key={amt} type="button" onClick={() => setBidDollars(amt)} className={`rounded px-2.5 py-1 text-xs transition ${bidDollars === amt ? "bg-[#38bdf8] font-bold text-[#07070b]" : "border border-white/[0.08] bg-[#07070b] text-[#71717a] hover:text-[#f3f4f6]"}`}>
+              ${amt}
             </button>
           ))}
         </div>
-        <input id="create-amount" name="amount" type="number" min="3" step="1" value={bidDollars} onChange={(e) => setBidDollars(Math.max(3, Number(e.target.value) || 3))} required className="mt-2 w-full rounded-xl border border-white/10 bg-[#0a0a14] px-4 py-3 font-mono text-sm outline-none focus:border-[#4cc9f0]" />
+        <input id="create-amount" name="amount" type="number" min="3" step="1" value={bidDollars} onChange={(e) => setBidDollars(Math.max(3, Number(e.target.value) || 3))} required className="mt-2 w-full rounded border border-white/[0.08] bg-[#07070b] px-3 py-2 text-xs text-[#fbbf24] outline-none focus:border-[#38bdf8]" />
       </div>
 
       {!devPayment && <TurnstileWidget onToken={setTurnstileToken} />}
-      <p className="text-xs leading-relaxed text-[#8f8c96]">Payment is final and non-refundable. Your rank is calculated live upon confirmation.</p>
-      {error && <p role="alert" className="text-sm text-[#f43f5e]">{error}</p>}
-      <button type="submit" disabled={loading} className="w-full rounded-full bg-[#4cc9f0] px-5 py-3.5 text-sm font-semibold text-[#05050a] transition hover:bg-[#3db8df] disabled:opacity-50">
-        {loading ? "Preparing checkout…" : `Pay $${bidDollars.toFixed(2)} & Launch Star →`}
+      {error && <p role="alert" className="text-xs text-[#ff5f56]">{error}</p>}
+      <button type="submit" disabled={loading} className="w-full rounded border border-[#38bdf8]/50 bg-[#38bdf8]/15 py-2.5 text-xs font-bold text-[#38bdf8] transition hover:bg-[#38bdf8] hover:text-[#07070b] disabled:opacity-50">
+        {loading ? "initiating checkout..." : `> execute payment ($${bidDollars.toFixed(2)})`}
       </button>
     </form>
   );

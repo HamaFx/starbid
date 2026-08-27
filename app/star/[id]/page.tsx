@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { LiveStarDetails } from "@/components/public/LiveStarDetails";
 import { SectorRadar } from "@/components/public/SectorRadar";
+import { TerminalWindowBar } from "@/components/ui/TerminalWindowBar";
 import { createSupabaseServerClient } from "@/lib/db/serverClient";
 import { getPublicStar, listPublicStars } from "@/lib/db/stars";
 import { demoStars } from "@/lib/demoStars";
@@ -46,40 +47,37 @@ export default async function StarPage({ params }: { params: Promise<{ id: strin
   const stars = await loadStars();
 
   return (
-    <main className="min-h-screen bg-[#05050a] px-4 py-8 text-[#fff4e0] sm:px-8 sm:py-16">
-      <div className="mx-auto max-w-5xl">
-        <div className="flex items-center justify-between border-b border-white/10 pb-4">
-          <Link href="/" className="font-mono text-sm text-[#4cc9f0] hover:underline">
-            ← Back to galaxy
+    <main className="min-h-screen bg-[#07070b] p-3 text-[#f3f4f6] sm:p-6">
+      <div className="mx-auto max-w-5xl space-y-4">
+        <div className="flex items-center justify-between font-mono text-xs text-[#71717a]">
+          <Link href="/" className="hover:text-[#38bdf8] transition">
+            &lt;- ~/galaxy
           </Link>
-          <Link
-            href="/create"
-            className="rounded-full border border-[#4cc9f0]/60 px-3 py-1 font-mono text-xs text-[#4cc9f0] hover:bg-[#4cc9f0] hover:text-[#05050a]"
-          >
-            + Create star
+          <Link href="/create" className="hover:text-[#38bdf8] transition">
+            + spawn star
           </Link>
         </div>
 
-        {star ? (
-          <div className="mt-8 grid gap-8 lg:grid-cols-[1fr_340px] lg:items-start">
-            <LiveStarDetails star={star} stars={stars} />
-            <SectorRadar star={star} stars={stars} />
+        <div className="terminal-window rounded-xl overflow-hidden">
+          <TerminalWindowBar title={`starbid — inspect --star=${id} — zsh`} />
+          <div className="p-4 sm:p-6">
+            {star ? (
+              <div className="grid gap-6 lg:grid-cols-[1fr_320px] lg:items-start">
+                <LiveStarDetails star={star} stars={stars} />
+                <SectorRadar star={star} stars={stars} />
+              </div>
+            ) : (
+              <div className="p-8 text-center font-mono text-xs text-[#71717a]">
+                <p className="text-[#ff5f56]">[ERROR] STAR_NOT_FOUND: {id}</p>
+                <Link href="/" className="mt-4 inline-block text-[#38bdf8] hover:underline">
+                  &lt;- return to galaxy
+                </Link>
+              </div>
+            )}
           </div>
-        ) : (
-          <div className="mt-12 rounded-2xl border border-white/10 bg-[#0a0a14] p-8 text-center">
-            <p className="font-mono text-xs uppercase tracking-[0.2em] text-[#8f8c96]">Star {id}</p>
-            <h1 className="mt-3 text-2xl font-bold">Star Not Found</h1>
-            <p className="mt-2 text-sm text-[#8f8c96]">This star is not currently available in the active public galaxy.</p>
-            <Link
-              href="/"
-              className="mt-6 inline-block rounded-full bg-[#4cc9f0] px-5 py-2.5 text-xs font-semibold text-[#05050a]"
-            >
-              Return to Orbit →
-            </Link>
-          </div>
-        )}
+        </div>
 
-        <footer className="mt-14 border-t border-white/10 pt-5">
+        <footer className="pt-4">
           <LegalLinks />
         </footer>
       </div>

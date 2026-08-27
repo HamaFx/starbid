@@ -1,23 +1,34 @@
 import { MyStarsList } from "@/components/dashboard/MyStarsList";
+import { TerminalWindowBar } from "@/components/ui/TerminalWindowBar";
 import { LegalLinks } from "@/app/legal-links";
 import Link from "next/link";
 
 export const metadata = {
-  title: "Dashboard — StarBid",
+  title: "Keyring & Stars — StarBid",
   description: "Manage your saved stars and claim tokens.",
 };
 
 export default function DashboardPage() {
   return (
-    <main className="min-h-screen bg-[#05050a] px-4 py-8 text-[#fff4e0] sm:px-6 sm:py-16">
-      <div className="mx-auto max-w-2xl">
-        <Link href="/" className="font-mono text-sm text-[#4cc9f0] hover:underline">
-          ← Back to galaxy
-        </Link>
-        <div className="mt-8">
-          <MyStarsList />
+    <main className="min-h-screen bg-[#07070b] p-3 text-[#f3f4f6] sm:p-6">
+      <div className="mx-auto max-w-2xl space-y-4">
+        <div className="flex items-center justify-between font-mono text-xs text-[#71717a]">
+          <Link href="/" className="hover:text-[#38bdf8] transition">
+            &lt;- ~/galaxy
+          </Link>
+          <Link href="/create" className="hover:text-[#38bdf8] transition">
+            + spawn star
+          </Link>
         </div>
-        <footer className="mt-14 border-t border-white/10 pt-5">
+
+        <div className="terminal-window rounded-xl overflow-hidden font-mono">
+          <TerminalWindowBar title="starbid — keyring --list — zsh" />
+          <div className="p-4 sm:p-6">
+            <MyStarsList />
+          </div>
+        </div>
+
+        <footer className="pt-4">
           <LegalLinks />
         </footer>
       </div>

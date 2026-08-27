@@ -1,49 +1,37 @@
 export function CreationSimulator() {
   const tiers = [
-    { name: "Singularity Core", color: "bg-[#fff4e0] text-[#05050a]", desc: "Rank #1 — Ivory corona, +15% dethrone hurdle" },
-    { name: "Photon Ring", color: "bg-[#ffb627] text-[#05050a]", desc: "Ranks #2–3 — Amber glow, high orbital speed" },
-    { name: "Inner Disk", color: "bg-[#ff6b35] text-[#05050a]", desc: "Ranks #4–8 — Thermal orange accretion band" },
-    { name: "Mid Disk", color: "bg-[#8f8c96] text-[#05050a]", desc: "Ranks #9–15 — Dense traffic corridor" },
-    { name: "Outer Rim", color: "bg-[#7a2e1d] text-[#fff4e0]", desc: "Ranks #16+ — Baseline orbit entry point" },
+    { name: "CORE", range: "Rank #01", min: "$100+", desc: "Ivory corona, +15% dethrone hurdle" },
+    { name: "PHOTON", range: "Ranks 2–3", min: "$50+", desc: "Amber halo, high orbital velocity" },
+    { name: "INNER", range: "Ranks 4–8", min: "$25+", desc: "Thermal orange accretion corridor" },
+    { name: "RIM", range: "Ranks 9+", min: "$3+", desc: "Baseline entrance trajectory" },
   ];
 
   return (
-    <aside className="rounded-2xl border border-white/10 bg-[#0a0a14] p-6">
-      <p className="font-mono text-xs uppercase tracking-[0.2em] text-[#4cc9f0]">
-        Accretion Physics
-      </p>
-      <h2 className="mt-1 text-xl font-bold text-[#fff4e0]">
-        How Your Star Orbits
-      </h2>
-      <p className="mt-2 text-xs leading-relaxed text-[#8f8c96]">
-        Position and visibility in StarBid scale continuously with cumulative lifetime spend.
-      </p>
+    <div className="terminal-window rounded-xl p-4 font-mono text-xs space-y-4">
+      <div className="flex items-center justify-between border-b border-white/[0.08] pb-2">
+        <span className="text-[#38bdf8]">$ cat physics.conf</span>
+        <span className="text-[10px] text-[#52525b]">RO_MODE</span>
+      </div>
 
-      {/* Accretion Bands Legend */}
-      <div className="mt-5 space-y-2.5">
-        {tiers.map((tier) => (
-          <div key={tier.name} className="flex items-start gap-2.5 rounded-xl border border-white/5 bg-[#05050a] p-3 text-xs">
-            <span className={`shrink-0 rounded px-2 py-0.5 font-mono text-[10px] font-bold ${tier.color}`}>
-              {tier.name}
-            </span>
-            <p className="text-[11px] leading-tight text-[#8f8c96]">
-              {tier.desc}
-            </p>
+      <div className="space-y-2">
+        {tiers.map((t) => (
+          <div key={t.name} className="flex items-start justify-between gap-2 border-b border-white/[0.04] pb-2 text-[11px]">
+            <div>
+              <span className="font-bold text-[#f3f4f6]">[{t.name}]</span>
+              <span className="ml-1.5 text-[#52525b]">{t.range}</span>
+              <p className="text-[10px] text-[#71717a] mt-0.5">{t.desc}</p>
+            </div>
+            <span className="text-[#fbbf24] font-semibold">{t.min}</span>
           </div>
         ))}
       </div>
 
-      {/* Key Architectural Notes */}
-      <div className="mt-6 rounded-xl border border-white/10 bg-[#05050a] p-4 text-xs">
-        <h3 className="font-mono text-[11px] uppercase tracking-wider text-[#ffb627]">
-          ⚡ Creator Guarantees
-        </h3>
-        <ul className="mt-2 space-y-1.5 text-[11px] text-[#8f8c96]">
-          <li>• <strong>No Accounts</strong>: Instant setup via cryptographic claim keys.</li>
-          <li>• <strong>Permanent Spend</strong>: Add fuel anytime to migrate inward.</li>
-          <li>• <strong>Direct Clicks</strong>: Track visitor referrals in real-time.</li>
-        </ul>
+      <div className="rounded border border-white/[0.06] bg-[#07070b] p-3 text-[10px] text-[#71717a] space-y-1">
+        <p className="text-[#f3f4f6] font-semibold"># SYSTEM GUARANTEES</p>
+        <p>• Zero passwords: controlled via bearer tokens.</p>
+        <p>• Cumulative spend: gravity never decays.</p>
+        <p>• Live redirect beacon with salted IP hash.</p>
       </div>
-    </aside>
+    </div>
   );
 }

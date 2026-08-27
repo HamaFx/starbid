@@ -25,8 +25,8 @@ export function FuelForm({ starId, claimToken }: { starId: string; claimToken: s
           amountCents: Math.round(amountDollars * 100),
         })
       );
-    } catch (submissionError) {
-      setError(submissionError instanceof Error ? submissionError.message : "Unable to start checkout");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Unable to start checkout");
     } finally {
       setLoading(false);
     }
@@ -36,28 +36,28 @@ export function FuelForm({ starId, claimToken }: { starId: string; claimToken: s
 
   if (!paymentsEnabled) {
     return (
-      <div className="rounded-xl border border-white/10 bg-[#05050a] p-4 text-xs leading-relaxed text-[#8f8c96]">
-        Payments are temporarily paused during onboarding. Fuel checkout will be active once store variables are configured.
+      <div className="rounded border border-white/[0.08] bg-[#07070b] p-3 font-mono text-xs text-[#71717a]">
+        [STATUS] PAYMENTS_OFFLINE: Fuel checkout is temporarily paused during onboarding.
       </div>
     );
   }
 
   return (
-    <form onSubmit={submit} className="space-y-4">
+    <form onSubmit={submit} className="space-y-3 font-mono text-xs">
       <div>
-        <label htmlFor="fuel-amount" className="block font-mono text-xs text-[#8f8c96]">
-          Fuel Amount ($ USD, min $3)
+        <label htmlFor="fuel-amount" className="block text-[#71717a]">
+          BOOST_AMOUNT ($ USD, min $3)
         </label>
-        <div className="mt-2 flex flex-wrap gap-2">
+        <div className="mt-1.5 flex flex-wrap gap-1.5">
           {FUEL_PRESETS.map((preset) => (
             <button
               key={preset}
               type="button"
               onClick={() => setAmountDollars(preset)}
-              className={`rounded-lg px-3 py-1.5 font-mono text-xs transition ${
+              className={`rounded px-2.5 py-1 text-xs transition ${
                 amountDollars === preset
-                  ? "bg-[#4cc9f0] font-semibold text-[#05050a]"
-                  : "border border-white/10 bg-[#05050a] text-[#8f8c96] hover:text-[#fff4e0]"
+                  ? "bg-[#38bdf8] font-bold text-[#07070b]"
+                  : "border border-white/[0.08] bg-[#07070b] text-[#71717a] hover:text-[#f3f4f6]"
               }`}
             >
               +${preset}
@@ -73,18 +73,18 @@ export function FuelForm({ starId, claimToken }: { starId: string; claimToken: s
           value={amountDollars}
           onChange={(e) => setAmountDollars(Math.max(3, Number(e.target.value) || 3))}
           required
-          className="mt-2 w-full rounded-xl border border-white/10 bg-[#05050a] px-4 py-3 font-mono text-sm outline-none focus:border-[#4cc9f0]"
+          className="mt-2 w-full rounded border border-white/[0.08] bg-[#07070b] px-3 py-2 text-xs text-[#fbbf24] outline-none focus:border-[#38bdf8]"
         />
       </div>
 
-      {error && <p role="alert" className="text-xs text-[#f43f5e]">{error}</p>}
+      {error && <p role="alert" className="text-xs text-[#ff5f56]">{error}</p>}
 
       <button
         type="submit"
         disabled={loading}
-        className="w-full rounded-full bg-[#4cc9f0] px-5 py-3 text-sm font-semibold text-[#05050a] transition hover:bg-[#3db8df] disabled:opacity-50"
+        className="w-full rounded border border-[#38bdf8]/50 bg-[#38bdf8]/15 py-2.5 text-xs font-bold text-[#38bdf8] transition hover:bg-[#38bdf8] hover:text-[#07070b] disabled:opacity-50"
       >
-        {loading ? "Preparing checkout…" : `Pay $${amountDollars.toFixed(2)} & Boost Star →`}
+        {loading ? "initiating checkout..." : `> boost gravity (+$${amountDollars.toFixed(2)})`}
       </button>
     </form>
   );

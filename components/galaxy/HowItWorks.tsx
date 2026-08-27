@@ -6,34 +6,37 @@ export function HowItWorks() {
   const [open, setOpen] = useState(false);
 
   return (
-    <div className="rounded-2xl border border-white/10 bg-[#0a0a14] p-5">
+    <div className="terminal-window rounded-xl p-4 font-mono text-xs">
       <button
         type="button"
         onClick={() => setOpen(!open)}
-        className="flex w-full items-center justify-between font-mono text-xs uppercase tracking-wider text-[#4cc9f0] hover:underline"
+        className="flex w-full items-center justify-between text-[#71717a] transition hover:text-[#38bdf8]"
       >
-        <span>✦ Rules of the Gravity Well</span>
-        <span>{open ? "▲ Hide" : "▼ How it works"}</span>
+        <span className="flex items-center gap-2">
+          <span className="text-[#38bdf8]">$</span>
+          <span>man starbid-physics(7)</span>
+        </span>
+        <span className="text-[10px] text-[#52525b]">{open ? "[--collapse]" : "[--expand]"}</span>
       </button>
 
       {open && (
-        <div className="mt-4 grid gap-4 border-t border-white/10 pt-4 text-xs leading-relaxed text-[#8f8c96] sm:grid-cols-3">
+        <div className="mt-4 grid gap-4 border-t border-white/[0.08] pt-4 text-[11px] leading-relaxed text-[#71717a] sm:grid-cols-3">
           <div className="space-y-1">
-            <h3 className="font-semibold text-[#fff4e0]">1. Logarithmic Gravity</h3>
+            <h3 className="font-semibold text-[#f3f4f6]">1. LOGARITHMIC ORBIT</h3>
             <p>
-              Distance from the Singularity scales with lifetime cumulative spend: <code className="font-mono text-[#ffb627]">r = rMax / (1 + ln(1 + spend))</code>.
+              Distance from singularity follows <code className="text-[#fbbf24]">r = rMax / (1 + ln(1 + spend))</code>. Spend is cumulative; gravity never decays.
             </p>
           </div>
           <div className="space-y-1">
-            <h3 className="font-semibold text-[#fff4e0]">2. The Singularity Rule</h3>
+            <h3 className="font-semibold text-[#f3f4f6]">2. SINGULARITY HURDLE</h3>
             <p>
-              To conquer rank #1, a challenger must surpass the leader by at least <strong>+15%</strong>. A 60-second anti-snipe immunity window is granted.
+              Dethroning rank #1 requires surpassing the current leader by <strong>+15%</strong>. A 60-second anti-snipe lock is granted.
             </p>
           </div>
           <div className="space-y-1">
-            <h3 className="font-semibold text-[#fff4e0]">3. Bearer Key Ownership</h3>
+            <h3 className="font-semibold text-[#f3f4f6]">3. BEARER KEY ACCESS</h3>
             <p>
-              Zero passwords or sessions. Your star is managed exclusively through your private cryptographic manage link.
+              Zero passwords or centralized cookies. Projects are controlled via cryptographic claim tokens delivered on confirmation.
             </p>
           </div>
         </div>

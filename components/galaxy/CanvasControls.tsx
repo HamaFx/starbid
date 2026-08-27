@@ -12,28 +12,18 @@ export function CanvasControls({
   onChangeSpeed: (nextSpeed: number) => void;
 }) {
   return (
-    <div className="pointer-events-auto flex items-center gap-2 rounded-lg border border-white/10 bg-[#05050a]/80 px-2.5 py-1.5 backdrop-blur-md">
-      {/* Sector Badge */}
-      <span className="hidden font-mono text-[10px] uppercase tracking-wider text-[#8f8c96] sm:inline-block">
-        SECTOR: <strong className="text-[#4cc9f0]">001-ALPHA</strong>
-      </span>
-
-      <div className="hidden h-3 w-px bg-white/10 sm:block" />
-
-      {/* Play / Pause Toggle */}
+    <div className="pointer-events-auto flex items-center gap-1.5 rounded border border-white/[0.08] bg-[#0c0c12]/90 p-1 font-mono text-[10px] backdrop-blur-md">
       <button
         type="button"
         onClick={onTogglePause}
-        aria-label={paused ? "Resume orbit motion" : "Pause orbit motion"}
-        className="flex items-center gap-1 rounded px-2 py-0.5 font-mono text-[11px] text-[#fff4e0] transition hover:bg-white/10"
+        className="rounded px-2 py-0.5 text-[#71717a] transition hover:bg-white/[0.06] hover:text-[#f3f4f6]"
       >
-        <span>{paused ? "▶ Resume" : "⏸ Pause"}</span>
+        {paused ? "▶ resume" : "⏸ pause"}
       </button>
 
-      <div className="h-3 w-px bg-white/10" />
+      <span className="text-[#27272a]">|</span>
 
-      {/* Speed Controls */}
-      <div className="flex items-center gap-1 font-mono text-[10px]">
+      <div className="flex items-center gap-0.5">
         {[0.5, 1, 2].map((s) => (
           <button
             key={s}
@@ -41,8 +31,8 @@ export function CanvasControls({
             onClick={() => onChangeSpeed(s)}
             className={`rounded px-1.5 py-0.5 transition ${
               speed === s
-                ? "bg-[#4cc9f0] font-semibold text-[#05050a]"
-                : "text-[#8f8c96] hover:text-[#fff4e0]"
+                ? "bg-white/10 font-semibold text-[#38bdf8]"
+                : "text-[#71717a] hover:text-[#f3f4f6]"
             }`}
           >
             {s}x

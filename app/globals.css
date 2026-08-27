@@ -1,23 +1,20 @@
 @import "tailwindcss";
 
 :root {
-  --void: #05050a;
-  --void-raised: #0a0a14;
-  --void-surface: #0f0f1c;
-  --outer-rim: #7a2e1d;
-  --mid-disk: #ff6b35;
-  --inner-disk: #ffb627;
-  --photon-ring: #fff4e0;
-  --chrome: #4cc9f0;
-  --rank-up: #4ade80;
-  --rank-down: #f43f5e;
-  --text-primary: #fff4e0;
-  --text-muted: #8f8c96;
-  --line: rgb(255 244 224 / 0.1);
-  --line-strong: rgb(255 244 224 / 0.2);
-  --font-display: -apple-system, BlinkMacSystemFont, "Space Grotesk", "Segoe UI", sans-serif;
-  --font-sans: -apple-system, BlinkMacSystemFont, "Geist", "Segoe UI", Roboto, sans-serif;
-  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  --void: #07070b;
+  --void-surface: #0c0c12;
+  --terminal-bar: #121218;
+  --terminal-border: rgba(255, 255, 255, 0.08);
+  --terminal-border-hover: rgba(255, 255, 255, 0.16);
+  --terminal-red: #ff5f56;
+  --terminal-yellow: #ffbd2e;
+  --terminal-green: #27c93f;
+  --terminal-cyan: #38bdf8;
+  --terminal-amber: #fbbf24;
+  --terminal-orange: #f97316;
+  --text-main: #f3f4f6;
+  --text-dim: #71717a;
+  --text-muted: #52525b;
 }
 
 * {
@@ -32,22 +29,19 @@ html,
 body {
   min-height: 100%;
   background: var(--void);
-  color: var(--text-primary);
-  font-family: var(--font-sans);
+  color: var(--text-main);
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Geist", "Segoe UI", sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
-h1, h2, h3, h4, h5, h6 {
-  font-family: var(--font-display);
-}
-
+code,
+pre,
 .font-mono {
-  font-family: var(--font-mono);
+  font-family: "SF Mono", "JetBrains Mono", Menlo, Monaco, Consolas, monospace;
 }
 
 button,
-a,
 input,
 select,
 textarea {
@@ -61,38 +55,41 @@ a {
 }
 
 :focus-visible {
-  outline: 2px solid var(--chrome);
-  outline-offset: 2px;
+  outline: 1px solid var(--terminal-cyan);
+  outline-offset: 1px;
 }
 
 ::selection {
-  background: var(--chrome);
-  color: var(--void);
+  background: rgba(56, 189, 248, 0.25);
+  color: #fff;
 }
 
-/* Custom subtle scrollbar */
+/* Minimal Terminal Scrollbar */
 ::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+  width: 4px;
+  height: 4px;
 }
 
 ::-webkit-scrollbar-track {
-  background: var(--void);
+  background: transparent;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: rgba(255, 244, 224, 0.15);
-  border-radius: 9999px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 2px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(76, 201, 240, 0.4);
+  background: rgba(255, 255, 255, 0.2);
 }
 
-.accretion-glow {
-  background: radial-gradient(circle at 50% 50%, rgba(255, 107, 53, 0.08) 0%, rgba(255, 182, 39, 0.03) 45%, transparent 70%);
+.terminal-window {
+  background: var(--void-surface);
+  border: 1px solid var(--terminal-border);
+  box-shadow: 0 20px 50px -10px rgba(0, 0, 0, 0.7), 0 0 0 1px rgba(255, 255, 255, 0.04);
 }
 
-.core-pulse {
-  box-shadow: 0 0 40px -10px rgba(255, 244, 224, 0.3), 0 0 80px -20px rgba(255, 182, 39, 0.2);
+.terminal-header {
+  background: var(--terminal-bar);
+  border-bottom: 1px solid var(--terminal-border);
 }

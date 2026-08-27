@@ -1,50 +1,51 @@
+import { TerminalWindowBar } from "@/components/ui/TerminalWindowBar";
+import { LegalLinks } from "@/app/legal-links";
 import Link from "next/link";
 
 export const metadata = {
   title: "Privacy Policy — StarBid",
-  description: "Privacy and data protection policy for StarBid.",
+  description: "Privacy policy and cryptographic data retention rules for StarBid.",
 };
 
 export default function PrivacyPage() {
   return (
-    <main className="min-h-screen bg-[#05050a] px-6 py-16 text-[#fff4e0]">
-      <div className="mx-auto max-w-3xl">
-        <Link href="/" className="font-mono text-sm text-[#4cc9f0]">← Back to galaxy</Link>
-        <h1 className="mt-8 text-3xl font-semibold tracking-tight sm:text-4xl">Privacy Policy</h1>
-        <p className="mt-2 font-mono text-xs text-[#8f8c96]">Last updated: August 2026</p>
-
-        <div className="mt-8 space-y-6 text-sm leading-relaxed text-[#8f8c96]">
-          <section className="space-y-2">
-            <h2 className="text-base font-semibold text-[#fff4e0]">1. Minimal Data Collection</h2>
-            <p>
-              StarBid is built on a privacy-first, zero-session architecture. We do not require account registration, passwords, or social OAuth profiles.
-            </p>
-          </section>
-
-          <section className="space-y-2">
-            <h2 className="text-base font-semibold text-[#fff4e0]">2. What We Collect</h2>
-            <ul className="list-disc space-y-1 pl-5">
-              <li><strong>Public Star Information</strong>: Project name, destination URL, logo URL, and optional X/Twitter handle.</li>
-              <li><strong>Contact Email</strong>: Used solely for Lemon Squeezy payment receipts and user-initiated claim key recovery emails via Resend.</li>
-              <li><strong>Outbound Clicks &amp; Analytics</strong>: Daily visitor counts use salted, one-way cryptographic SHA-256 IP hashes. No raw IP addresses or personal tracking profiles are stored.</li>
-            </ul>
-          </section>
-
-          <section className="space-y-2">
-            <h2 className="text-base font-semibold text-[#fff4e0]">3. Security of Claim Tokens</h2>
-            <p>
-              Secret claim keys are never stored in plaintext on our servers. We store only one-way cryptographic hashes (<code className="font-mono text-[#4cc9f0]">SHA-256</code>) in our database.
-            </p>
-          </section>
-
-          <section className="space-y-2">
-            <h2 className="text-base font-semibold text-[#fff4e0]">4. Third-Party Processors</h2>
-            <p>
-              Payments are handled by Lemon Squeezy (Merchant of Record). Bot verification is powered by Cloudflare Turnstile.
-              We do not sell, rent, or monetize your personal data to any advertisers or third-party brokers.
-            </p>
-          </section>
+    <main className="min-h-screen bg-[#07070b] p-3 text-[#f3f4f6] sm:p-6">
+      <div className="mx-auto max-w-4xl space-y-4">
+        <div className="flex items-center justify-between font-mono text-xs text-[#71717a]">
+          <Link href="/" className="hover:text-[#38bdf8] transition">
+            &lt;- ~/galaxy
+          </Link>
         </div>
+
+        <div className="terminal-window rounded-xl overflow-hidden font-mono">
+          <TerminalWindowBar title="starbid — legal/privacy.md — zsh" />
+
+          <div className="p-5 sm:p-7 space-y-5 text-xs text-[#71717a] leading-relaxed">
+            <div>
+              <span className="text-[10px] text-[#52525b]">PRIVACY_PROTOCOL_V1</span>
+              <h1 className="text-xl font-bold text-[#f3f4f6] mt-0.5">Privacy Policy</h1>
+            </div>
+
+            <section className="space-y-1.5">
+              <h2 className="text-[#f3f4f6] font-semibold">1. DATA MINIMIZATION</h2>
+              <p>We do not use tracking cookies, tracking pixels, or third-party behavioral analytics on public pages.</p>
+            </section>
+
+            <section className="space-y-1.5">
+              <h2 className="text-[#f3f4f6] font-semibold">2. CLICK TELEMETRY DEDUPLICATION</h2>
+              <p>Outbound click tracking hashes visitor IP addresses using SHA-256 with a secret cryptographic salt that rotates daily. Raw IPs are never written to disk.</p>
+            </section>
+
+            <section className="space-y-1.5">
+              <h2 className="text-[#f3f4f6] font-semibold">3. BEARER TOKEN INTEGRITY</h2>
+              <p>Private claim tokens are hashed using SHA-256 before storage in Supabase. Only holders of the raw token can view private analytics or add fuel.</p>
+            </section>
+          </div>
+        </div>
+
+        <footer className="pt-4">
+          <LegalLinks />
+        </footer>
       </div>
     </main>
   );

@@ -10,54 +10,47 @@ export function SectorRadar({ star, stars }: { star: Star; stars: Star[] }) {
   const nextAbove = myIndex > 0 ? sorted[myIndex - 1] : null;
   const nextBelow = myIndex >= 0 && myIndex < sorted.length - 1 ? sorted[myIndex + 1] : null;
 
-  const gapToOvertakeCents = nextAbove
-    ? Math.max(0, nextAbove.totalBidCents - star.totalBidCents + 100)
-    : 0;
+  const gapCents = nextAbove ? Math.max(0, nextAbove.totalBidCents - star.totalBidCents + 100) : 0;
 
   return (
-    <aside className="rounded-2xl border border-white/10 bg-[#0a0a14] p-5 sm:p-6">
-      <p className="font-mono text-xs uppercase tracking-[0.2em] text-[#ffb627]">
-        Sector Proximity
-      </p>
-      <h2 className="mt-1 text-lg font-bold text-[#fff4e0]">
-        Orbital Neighbors
-      </h2>
-      <p className="mt-1 text-xs text-[#8f8c96]">
-        Projects occupying adjacent orbits in this accretion band.
-      </p>
+    <aside className="terminal-window rounded-xl p-4 font-mono text-xs space-y-3">
+      <div className="flex items-center justify-between border-b border-white/[0.08] pb-2">
+        <span className="text-[#38bdf8]">$ radar --sector</span>
+        <span className="text-[10px] text-[#52525b]">NEIGHBORS</span>
+      </div>
 
-      <div className="mt-4 space-y-3 font-mono text-xs">
+      <div className="space-y-2 text-[11px]">
         {nextAbove && (
-          <div className="rounded-xl border border-white/5 bg-[#05050a] p-3">
-            <span className="text-[10px] text-[#8f8c96]">Orbit Directly Above (#{myIndex})</span>
-            <div className="mt-1 flex items-center justify-between">
-              <Link href={`/star/${encodeURIComponent(nextAbove.id)}`} className="text-[#fff4e0] hover:text-[#4cc9f0]">
+          <div className="rounded border border-white/[0.06] bg-[#07070b] p-2.5">
+            <span className="text-[10px] text-[#52525b]">ORBIT_ABOVE [#{myIndex}]</span>
+            <div className="flex items-center justify-between mt-0.5">
+              <Link href={`/star/${encodeURIComponent(nextAbove.id)}`} className="text-[#f3f4f6] hover:text-[#38bdf8]">
                 {nextAbove.name}
               </Link>
-              <span className="text-[#ffb627]">${(nextAbove.totalBidCents / 100).toFixed(2)}</span>
+              <span className="text-[#fbbf24] font-semibold">${(nextAbove.totalBidCents / 100).toFixed(2)}</span>
             </div>
-            <p className="mt-1 text-[10px] text-[#4ade80]">
-              +${(gapToOvertakeCents / 100).toFixed(2)} needed to overtake
+            <p className="text-[10px] text-[#27c93f] mt-0.5">
+              +${(gapCents / 100).toFixed(2)} to overtake
             </p>
           </div>
         )}
 
-        <div className="rounded-xl border border-[#4cc9f0]/40 bg-[#4cc9f0]/10 p-3">
-          <span className="text-[10px] font-semibold text-[#4cc9f0]">Current Target (#{myIndex + 1})</span>
-          <div className="mt-1 flex items-center justify-between">
-            <span className="font-semibold text-[#fff4e0]">{star.name}</span>
-            <span className="font-bold text-[#ffb627]">${(star.totalBidCents / 100).toFixed(2)}</span>
+        <div className="rounded border border-[#38bdf8]/40 bg-[#38bdf8]/5 p-2.5">
+          <span className="text-[10px] text-[#38bdf8] font-bold">CURRENT_TARGET [#{myIndex + 1}]</span>
+          <div className="flex items-center justify-between mt-0.5">
+            <span className="font-semibold text-[#f3f4f6]">{star.name}</span>
+            <span className="font-bold text-[#fbbf24]">${(star.totalBidCents / 100).toFixed(2)}</span>
           </div>
         </div>
 
         {nextBelow && (
-          <div className="rounded-xl border border-white/5 bg-[#05050a] p-3">
-            <span className="text-[10px] text-[#8f8c96]">Orbit Directly Below (#{myIndex + 2})</span>
-            <div className="mt-1 flex items-center justify-between">
-              <Link href={`/star/${encodeURIComponent(nextBelow.id)}`} className="text-[#8f8c96] hover:text-[#fff4e0]">
+          <div className="rounded border border-white/[0.06] bg-[#07070b] p-2.5">
+            <span className="text-[10px] text-[#52525b]">ORBIT_BELOW [#{myIndex + 2}]</span>
+            <div className="flex items-center justify-between mt-0.5">
+              <Link href={`/star/${encodeURIComponent(nextBelow.id)}`} className="text-[#71717a] hover:text-[#f3f4f6]">
                 {nextBelow.name}
               </Link>
-              <span className="text-[#8f8c96]">${(nextBelow.totalBidCents / 100).toFixed(2)}</span>
+              <span className="text-[#71717a]">${(nextBelow.totalBidCents / 100).toFixed(2)}</span>
             </div>
           </div>
         )}

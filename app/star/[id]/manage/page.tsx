@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { FuelForm } from "@/components/dashboard/FuelForm";
 import { readManageKey } from "@/lib/identity/manageKey";
 import { OwnerAnalytics } from "@/components/dashboard/OwnerAnalytics";
+import { TerminalWindowBar } from "@/components/ui/TerminalWindowBar";
 import { LegalLinks } from "@/app/legal-links";
 import Link from "next/link";
 
@@ -22,45 +23,37 @@ export default async function ManageStarPage({
   const claimToken = readManageKey(new URLSearchParams(query as Record<string, string>).toString());
 
   return (
-    <main className="min-h-screen bg-[#05050a] px-4 py-8 text-[#fff4e0] sm:px-6 sm:py-16">
-      <div className="mx-auto max-w-2xl">
-        <div className="flex items-center justify-between border-b border-white/10 pb-4">
-          <Link href="/" className="font-mono text-sm text-[#4cc9f0] hover:underline">
-            ← Back to galaxy
+    <main className="min-h-screen bg-[#07070b] p-3 text-[#f3f4f6] sm:p-6">
+      <div className="mx-auto max-w-2xl space-y-4">
+        <div className="flex items-center justify-between font-mono text-xs text-[#71717a]">
+          <Link href="/" className="hover:text-[#38bdf8] transition">
+            &lt;- ~/galaxy
           </Link>
-          <Link
-            href={`/star/${encodeURIComponent(id)}`}
-            className="font-mono text-xs text-[#8f8c96] hover:text-[#fff4e0]"
-          >
-            Public View ↗
+          <Link href={`/star/${encodeURIComponent(id)}`} className="hover:text-[#38bdf8] transition">
+            inspect public -&gt;
           </Link>
         </div>
 
-        <div className="mt-8">
-          <p className="font-mono text-xs uppercase tracking-[0.2em] text-[#ffb627]">
-            Private Management
-          </p>
-          <h1 className="mt-1 text-3xl font-bold tracking-tight sm:text-4xl">
-            Star Control Panel
-          </h1>
-          <p className="mt-2 text-sm leading-relaxed text-[#8f8c96]">
-            Star ID: <code className="font-mono text-[#fff4e0]">{id}</code>. Keep this URL secret; it is the bearer key to your star.
-          </p>
-        </div>
+        <div className="terminal-window rounded-xl overflow-hidden font-mono">
+          <TerminalWindowBar title={`starbid — manage --key=0x${id.slice(0, 6)} — zsh`} />
 
-        <div className="mt-8 rounded-2xl border border-white/10 bg-[#0a0a14] p-5 sm:p-6">
-          <h2 className="text-lg font-semibold text-[#fff4e0]">Add Fuel &amp; Boost Rank</h2>
-          <p className="mt-1 text-xs text-[#8f8c96]">Every dollar added moves your star inward towards the Singularity.</p>
-          <div className="mt-4">
-            <FuelForm starId={id} claimToken={claimToken} />
+          <div className="p-4 sm:p-6 space-y-4">
+            <div className="border-b border-white/[0.08] pb-3 text-xs">
+              <span className="text-[10px] text-[#52525b]">AUTHENTICATED_BEARER_SESSION</span>
+              <h1 className="text-xl font-bold text-[#f3f4f6] mt-0.5">Control Panel // {id}</h1>
+            </div>
+
+            <div className="rounded border border-white/[0.08] bg-[#07070b] p-4">
+              <h2 className="text-xs font-semibold text-[#f3f4f6]">Add Fuel &amp; Migrate Inward</h2>
+              <p className="text-[11px] text-[#71717a] mt-0.5 mb-3">Every boost permanently increases orbital gravity.</p>
+              <FuelForm starId={id} claimToken={claimToken} />
+            </div>
+
+            <OwnerAnalytics starId={id} claimToken={claimToken} />
           </div>
         </div>
 
-        <div className="mt-6">
-          <OwnerAnalytics starId={id} claimToken={claimToken} />
-        </div>
-
-        <footer className="mt-14 border-t border-white/10 pt-5">
+        <footer className="pt-4">
           <LegalLinks />
         </footer>
       </div>

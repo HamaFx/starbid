@@ -23,71 +23,72 @@ export function MyStarsList() {
     const url = URL.createObjectURL(blob);
     const anchor = document.createElement("a");
     anchor.href = url;
-    anchor.download = "gravitywell-claim-links.txt";
+    anchor.download = "starbid-keys.txt";
     anchor.click();
     URL.revokeObjectURL(url);
   };
 
   return (
-    <section className="rounded-2xl border border-white/10 bg-[#0a0a14] p-6">
-      <div className="flex items-center justify-between gap-4 border-b border-white/10 pb-4">
+    <div className="font-mono text-xs space-y-4">
+      <div className="flex items-center justify-between border-b border-white/[0.08] pb-3">
         <div>
-          <h1 className="text-xl font-semibold">My Stars</h1>
-          <p className="text-xs text-[#8f8c96]">Bearer claim tokens saved in this browser</p>
+          <span className="text-[10px] text-[#52525b]">LOCAL_KEYRING</span>
+          <h2 className="text-sm font-bold text-[#f3f4f6]">Stored Bearer Tokens ({entries.length})</h2>
         </div>
         {entries.length > 0 && (
           <button
             type="button"
             onClick={handleExport}
-            className="rounded-full border border-[#4cc9f0]/60 px-3 py-1.5 font-mono text-xs text-[#4cc9f0] transition hover:bg-[#4cc9f0] hover:text-[#05050a]"
+            className="rounded border border-white/[0.08] bg-white/[0.03] px-2.5 py-1 text-[11px] text-[#71717a] hover:text-[#f3f4f6]"
           >
-            Export all (.txt)
+            export .txt
           </button>
         )}
       </div>
 
       {entries.length === 0 ? (
-        <div className="py-8 text-center">
-          <p className="text-sm text-[#8f8c96]">No claim links saved on this device yet.</p>
+        <div className="py-8 text-center text-[#71717a]">
+          <p className="text-xs">[STATUS] ZERO_LOCAL_KEYS</p>
+          <p className="text-[11px] text-[#52525b] mt-1">No bearer claim tokens stored in this browser session.</p>
           <Link
             href="/create"
-            className="mt-4 inline-block rounded-full bg-[#4cc9f0] px-4 py-2 text-sm font-medium text-[#05050a]"
+            className="mt-3 inline-block rounded border border-[#38bdf8]/40 bg-[#38bdf8]/10 px-3 py-1.5 text-xs text-[#38bdf8] hover:bg-[#38bdf8] hover:text-[#07070b] transition"
           >
-            Create a star →
+            + spawn new star
           </Link>
         </div>
       ) : (
-        <ul className="mt-5 space-y-4">
+        <ul className="space-y-2">
           {entries.map(({ starId, token }) => (
             <li
               key={starId}
-              className="flex flex-col gap-3 rounded-xl border border-white/10 bg-[#05050a] p-4 sm:flex-row sm:items-center sm:justify-between"
+              className="flex flex-col gap-2 rounded border border-white/[0.06] bg-[#07070b] p-3 sm:flex-row sm:items-center sm:justify-between"
             >
-              <div>
-                <p className="font-mono text-xs text-[#8f8c96]">Star ID</p>
-                <p className="font-mono text-sm font-medium text-[#fff4e0]">{starId}</p>
+              <div className="truncate">
+                <span className="text-[10px] text-[#52525b]">PID:</span>
+                <span className="ml-1.5 font-bold text-[#f3f4f6]">{starId}</span>
               </div>
 
               <div className="flex items-center gap-2">
                 <button
                   type="button"
                   onClick={() => handleCopy(starId, token)}
-                  className="rounded-lg border border-white/10 px-3 py-1.5 font-mono text-xs text-[#8f8c96] hover:text-[#fff4e0]"
+                  className="rounded border border-white/[0.08] px-2.5 py-1 text-[10px] text-[#71717a] hover:text-[#f3f4f6]"
                 >
-                  {copiedId === starId ? "Copied ✓" : "Copy key link"}
+                  {copiedId === starId ? "copied ✓" : "copy link"}
                 </button>
 
                 <Link
                   href={`/star/${encodeURIComponent(starId)}/manage?key=${encodeURIComponent(token)}`}
-                  className="rounded-lg bg-[#4cc9f0] px-3 py-1.5 font-mono text-xs font-medium text-[#05050a]"
+                  className="rounded border border-[#38bdf8]/40 bg-[#38bdf8]/10 px-2.5 py-1 text-[10px] font-semibold text-[#38bdf8] hover:bg-[#38bdf8] hover:text-[#07070b] transition"
                 >
-                  Manage & Fuel →
+                  manage →
                 </Link>
               </div>
             </li>
           ))}
         </ul>
       )}
-    </section>
+    </div>
   );
 }

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { TerminalWindowBar } from "@/components/ui/TerminalWindowBar";
 import { GalaxyCanvas } from "@/components/galaxy/GalaxyCanvas";
 import { GalaxyListView } from "@/components/galaxy/GalaxyListView";
 import { ObservatoryHUD } from "@/components/galaxy/ObservatoryHUD";
@@ -39,59 +40,58 @@ export function ObservatoryStage({ initialStars = [] }: { initialStars?: Star[] 
   const currentStars = stars.length ? stars : initialStars;
 
   return (
-    <div className="relative flex min-h-[85vh] w-full flex-col overflow-hidden rounded-3xl border border-white/10 bg-[#05050a] shadow-2xl shadow-orange-950/20 sm:min-h-[88vh]">
-      {/* Top Floating HUD Bar */}
-      <div className="absolute left-3 right-3 top-3 z-30 sm:left-5 sm:right-5 sm:top-5">
-        <ObservatoryHUD
-          stars={currentStars}
-          onOpenLeaderboard={() => setLeaderboardOpen(true)}
-        />
-      </div>
+    <div className="terminal-window relative flex min-h-[85vh] w-full flex-col overflow-hidden rounded-xl border border-white/[0.08] sm:min-h-[88vh]">
+      {/* macOS Terminal Window Title Bar */}
+      <TerminalWindowBar
+        title="starbid — ~/supermassive/accretion_alpha — zsh"
+        rightSlot={
+          <div className="flex items-center gap-1 font-mono text-[10px]">
+            <button
+              type="button"
+              onClick={() => setView("galaxy")}
+              className={`rounded px-1.5 py-0.5 transition ${view === "galaxy" ? "bg-white/10 text-[#38bdf8]" : "text-[#71717a] hover:text-[#f3f4f6]"}`}
+            >
+              canvas
+            </button>
+            <button
+              type="button"
+              onClick={() => setView("list")}
+              className={`rounded px-1.5 py-0.5 transition ${view === "list" ? "bg-white/10 text-[#38bdf8]" : "text-[#71717a] hover:text-[#f3f4f6]"}`}
+            >
+              matrix
+            </button>
+          </div>
+        }
+      />
 
-      {/* Main Galaxy Arena */}
-      <div className="relative flex-1">
+      {/* Terminal Command Bar / HUD */}
+      <ObservatoryHUD
+        stars={currentStars}
+        onOpenLeaderboard={() => setLeaderboardOpen(true)}
+      />
+
+      {/* Main Galaxy Observatory Stage */}
+      <div className="relative flex-1 bg-[#05050a]">
         {view === "galaxy" ? (
-          <div className="accretion-glow h-full w-full">
+          <div className="h-full w-full">
             <GalaxyCanvas
               stars={currentStars}
               onSelectStar={(star, rank) => setSelectedStar({ star, rank })}
             />
           </div>
         ) : (
-          <div className="mx-auto max-w-3xl p-6 pt-24">
+          <div className="mx-auto max-w-4xl p-4 sm:p-6">
             <GalaxyListView stars={currentStars} />
           </div>
         )}
       </div>
 
-      {/* Bottom Floating Bar */}
-      <div className="pointer-events-none absolute bottom-3 left-3 right-3 z-20 flex items-center justify-between gap-3 sm:bottom-5 sm:left-5 sm:right-5">
+      {/* Bottom Floating Status Bar */}
+      <div className="pointer-events-none absolute bottom-2.5 left-2.5 right-2.5 z-20 flex items-center justify-between gap-2 sm:bottom-3 sm:left-3 sm:right-3">
         <FloatingTicker initialStars={currentStars} />
-
-        {/* View Toggle */}
-        <div className="pointer-events-auto flex rounded-xl border border-white/10 bg-[#05050a]/80 p-1 backdrop-blur-md">
-          <button
-            type="button"
-            onClick={() => setView("galaxy")}
-            className={`rounded-lg px-2.5 py-1 font-mono text-[11px] transition ${
-              view === "galaxy" ? "bg-[#4cc9f0] font-semibold text-[#05050a]" : "text-[#8f8c96] hover:text-[#fff4e0]"
-            }`}
-          >
-            🌌 Canvas
-          </button>
-          <button
-            type="button"
-            onClick={() => setView("list")}
-            className={`rounded-lg px-2.5 py-1 font-mono text-[11px] transition ${
-              view === "list" ? "bg-[#4cc9f0] font-semibold text-[#05050a]" : "text-[#8f8c96] hover:text-[#fff4e0]"
-            }`}
-          >
-            📋 List
-          </button>
-        </div>
       </div>
 
-      {/* Slide-Over Leaderboard Drawer */}
+      {/* Slide-Over Terminal Drawer */}
       <LeaderboardDrawer
         stars={currentStars}
         open={leaderboardOpen}
@@ -99,7 +99,7 @@ export function ObservatoryStage({ initialStars = [] }: { initialStars?: Star[] 
         onSelectStar={(star, rank) => setSelectedStar({ star, rank })}
       />
 
-      {/* Star Preview Inspector */}
+      {/* Star Preview Inspector Window */}
       <StarPreviewModal
         star={selectedStar?.star ?? null}
         rank={selectedStar?.rank ?? 1}

@@ -20,92 +20,79 @@ export function LeaderboardTable({ stars }: { stars: Star[] }) {
   }, [stars, search, filter]);
 
   return (
-    <div>
-      <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <input
-          type="search"
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          placeholder="Search projects or @handles…"
-          className="rounded-xl border border-white/10 bg-[#05050a] px-3.5 py-2 text-xs text-[#fff4e0] outline-none focus:border-[#4cc9f0] sm:w-64"
-        />
+    <div className="font-mono text-xs space-y-3">
+      {/* Filter / Search Command Bar */}
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between border-b border-white/[0.08] pb-3">
+        <div className="flex items-center gap-2 rounded border border-white/[0.08] bg-[#07070b] px-3 py-1.5 text-xs sm:w-72">
+          <span className="text-[#52525b]">grep:</span>
+          <input
+            type="search"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="filter projects..."
+            className="flex-1 bg-transparent text-[#f3f4f6] outline-none placeholder-[#52525b]"
+          />
+        </div>
 
-        <div className="flex gap-1.5">
-          {(["all", "top10", "founding"] as const).map((mode) => (
+        <div className="flex gap-1 text-[11px]">
+          {(["all", "top10", "founding"] as const).map((m) => (
             <button
-              key={mode}
+              key={m}
               type="button"
-              onClick={() => setFilter(mode)}
-              className={`rounded-lg px-2.5 py-1 font-mono text-xs transition ${
-                filter === mode
-                  ? "bg-[#4cc9f0] font-semibold text-[#05050a]"
-                  : "border border-white/10 bg-[#05050a] text-[#8f8c96] hover:text-[#fff4e0]"
+              onClick={() => setFilter(m)}
+              className={`rounded px-2.5 py-1 transition ${
+                filter === m ? "bg-white/10 text-[#38bdf8] font-semibold" : "text-[#52525b] hover:text-[#71717a]"
               }`}
             >
-              {mode === "all" ? "All Orbits" : mode === "top10" ? "Top 10" : "Founding"}
+              --{m}
             </button>
           ))}
         </div>
       </div>
 
-      <div className="overflow-hidden rounded-2xl border border-white/10 bg-[#0a0a14]">
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-sm">
-            <thead className="border-b border-white/10 bg-[#05050a] font-mono text-xs text-[#8f8c96]">
-              <tr>
-                <th className="p-4">Rank</th>
-                <th className="p-4">Project</th>
-                <th className="p-4 text-right">Total Gravity</th>
-                <th className="p-4 text-right">Inspect</th>
+      {/* Table Data */}
+      <div className="overflow-x-auto">
+        <table className="w-full text-left text-xs">
+          <thead className="border-b border-white/[0.08] text-[10px] text-[#52525b]">
+            <tr>
+              <th className="py-2 px-3">RNK</th>
+              <th className="py-2 px-3">PROJECT</th>
+              <th className="py-2 px-3">HANDLE</th>
+              <th className="py-2 px-3 text-right">GRAVITY</th>
+              <th className="py-2 px-3 text-right">ACTION</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-white/[0.04]">
+            {filtered.map((star, idx) => (
+              <tr key={star.id} className="transition hover:bg-white/[0.02]">
+                <td className="py-2.5 px-3 text-[#52525b]">
+                  #{String(idx + 1).padStart(2, "0")}
+                </td>
+                <td className="py-2.5 px-3 font-semibold text-[#f3f4f6]">
+                  <Link href={`/star/${encodeURIComponent(star.id)}`} className="hover:text-[#38bdf8]">
+                    {star.name}
+                  </Link>
+                  {idx === 0 && <span className="ml-2 text-[9px] text-[#38bdf8]">[CORE]</span>}
+                  {star.isFounding && <span className="ml-1 text-[9px] text-[#fbbf24]">[FOUNDING]</span>}
+                </td>
+                <td className="py-2.5 px-3 text-[#71717a]">
+                  {star.xHandle ?? "—"}
+                </td>
+                <td className="py-2.5 px-3 text-right font-bold text-[#fbbf24]">
+                  ${(star.totalBidCents / 100).toFixed(2)}
+                </td>
+                <td className="py-2.5 px-3 text-right">
+                  <Link
+                    href={`/star/${encodeURIComponent(star.id)}`}
+                    className="rounded border border-white/[0.08] px-2 py-0.5 text-[10px] text-[#71717a] hover:text-[#f3f4f6]"
+                  >
+                    inspect →
+                  </Link>
+                </td>
               </tr>
-            </thead>
-            <tbody className="divide-y divide-white/5 font-mono">
-              {filtered.length === 0 ? (
-                <tr>
-                  <td colSpan={4} className="p-8 text-center text-xs text-[#8f8c96]">
-                    No matching stars in orbit.
-                  </td>
-                </tr>
-              ) : (
-                filtered.map((star, index) => (
-                  <tr key={star.id} className="transition hover:bg-[#0f0f1c]">
-                    <td className="p-4 text-xs font-semibold text-[#8f8c96]">
-                      {String(index + 1).padStart(2, "0")}
-                    </td>
-                    <td className="p-4 font-sans font-medium text-[#fff4e0]">
-                      <div className="flex items-center gap-2">
-                        <Link href={`/star/${encodeURIComponent(star.id)}`} className="hover:text-[#4cc9f0]">
-                          {star.name}
-                        </Link>
-                        {index === 0 && (
-                          <span className="rounded bg-[#ffb627]/15 px-1.5 py-0.5 font-mono text-[9px] text-[#ffb627]">
-                            CORE #1
-                          </span>
-                        )}
-                        {star.isFounding && (
-                          <span className="rounded bg-amber-400/10 px-1.5 py-0.5 font-mono text-[9px] text-[#ffb627]">
-                            FOUNDING
-                          </span>
-                        )}
-                      </div>
-                    </td>
-                    <td className="p-4 text-right font-mono font-semibold text-[#ffb627]">
-                      ${(star.totalBidCents / 100).toFixed(2)}
-                    </td>
-                    <td className="p-4 text-right">
-                      <Link
-                        href={`/star/${encodeURIComponent(star.id)}`}
-                        className="rounded-lg border border-white/10 px-2.5 py-1 text-xs text-[#8f8c96] hover:border-[#4cc9f0] hover:text-[#4cc9f0]"
-                      >
-                        View →
-                      </Link>
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
+            ))}
+          </tbody>
+        </table>
       </div>
     </div>
   );
