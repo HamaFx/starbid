@@ -13,6 +13,8 @@ export class StarSprite {
   private graphic: Graphics;
   private label: Text | null = null;
   private isHovered = false;
+  public isDimmed = false;
+  public isFocused = false;
 
   constructor(
     star: Star,
@@ -48,15 +50,13 @@ export class StarSprite {
     this.graphic = new Graphics();
     this.container.addChild(this.graphic);
 
-    // Subtle Monospace Name Tag for Top Stars
-    if (this.rank < 5) {
+    if (this.rank < 8) {
       this.label = new Text({
         text: this.star.name.length > 12 ? `${this.star.name.slice(0, 11)}…` : this.star.name,
         style: {
           fontFamily: "monospace",
           fontSize: 9,
           fill: this.rank === 0 ? 0x38bdf8 : 0x71717a,
-          letterSpacing: 0.5,
         },
       });
       this.label.anchor.set(0.5, 0);
@@ -77,6 +77,12 @@ export class StarSprite {
     this.redraw();
   }
 
+  public setFilterState(isDimmed: boolean, isFocused: boolean) {
+    this.isDimmed = isDimmed;
+    this.isFocused = isFocused;
+    this.redraw();
+  }
+
   public redraw() {
     this.graphic.clear();
     const isTop = this.rank === 0;
@@ -84,29 +90,37 @@ export class StarSprite {
     const isInner = this.rank >= 3 && this.rank < 8;
 
     const color = isTop ? 0xfff4e0 : isPhoton ? 0xfbbf24 : isInner ? 0xf97316 : 0x71717a;
-    const baseSize = this.isHovered ? this.starSize * 1.4 : this.starSize;
+    const baseSize = this.isHovered || this.isFocused ? this.starSize * 1.4 : this.starSize;
+    const alphaMultiplier = this.isDimmed ? 0.2 : 1;
+
+    // Focused Target Reticle
+    if (this.isFocused) {
+      this.graphic.circle(0, 0, baseSize + 10).stroke({ color: 0x38bdf8, alpha: 0.8, width: 1.5 });
+      this.graphic.circle(0, 0, baseSize + 5).stroke({ color: 0xffffff, alpha: 0.6, width: 1 });
+    }
 
     // Diffraction Spikes
-    if (isTop || isPhoton) {
+    if ((isTop || isPhoton) && !this.isDimmed) {
       const spikeLen = baseSize * (isTop ? 2.4 : 1.8);
-      this.graphic.moveTo(-spikeLen, 0).lineTo(spikeLen, 0).stroke({ color: 0xffffff, alpha: 0.3, width: 1 });
-      this.graphic.moveTo(0, -spikeLen).lineTo(0, spikeLen).stroke({ color: 0xffffff, alpha: 0.3, width: 1 });
+      this.graphic.moveTo(-spikeLen, 0).lineTo(spikeLen, 0).stroke({ color: 0xffffff, alpha: 0.3 * alphaMultiplier, width: 1 });
+      this.graphic.moveTo(0, -spikeLen).lineTo(0, spikeLen).stroke({ color: 0xffffff, alpha: 0.3 * alphaMultiplier, width: 1 });
     }
 
     // Outer Corona Rings
-    if (isTop) {
+    if (isTop && !this.isDimmed) {
       this.graphic.circle(0, 0, baseSize + 6).stroke({ color: 0x38bdf8, alpha: 0.4, width: 1.5 });
       this.graphic.circle(0, 0, baseSize + 3).stroke({ color: 0xfbbf24, alpha: 0.6, width: 1 });
-    } else if (isPhoton || this.isHovered) {
+    } else if ((isPhoton || this.isHovered) && !this.isDimmed) {
       this.graphic.circle(0, 0, baseSize + 4).stroke({ color: isPhoton ? 0xfbbf24 : 0x38bdf8, alpha: 0.4, width: 1 });
     }
 
     // Core Star Body
     this.graphic.circle(0, 0, baseSize).fill({
       color: this.star.verified ? 0xffffff : color,
-      alpha: this.star.isDemo ? 0.7 : 1,
+      alpha: (this.star.isDemo ? 0.7 : 1) * alphaMultiplier,
     });
 
+    if (this.label) this.label.alpha = alphaMultiplier;
     if (isTop || isPhoton || this.isHovered) this.graphic.blendMode = "add";
   }
 

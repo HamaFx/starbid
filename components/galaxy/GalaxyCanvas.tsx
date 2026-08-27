@@ -8,9 +8,20 @@ import { OrbitTrails } from "@/components/galaxy/OrbitTrails";
 import { GalaxyViewport } from "@/components/galaxy/GalaxyViewport";
 import { CanvasControls } from "@/components/galaxy/CanvasControls";
 import { sound } from "@/components/galaxy/AudioFeedback";
+import type { FilterTier } from "@/components/galaxy/ObservatoryHUD";
 import type { Star } from "@/lib/types";
 
-export function GalaxyCanvas({ stars, onSelectStar }: { stars: Star[]; onSelectStar?: (star: Star, rank: number) => void }) {
+export function GalaxyCanvas({
+  stars,
+  filterTier = "all",
+  searchQuery = "",
+  onSelectStar,
+}: {
+  stars: Star[];
+  filterTier?: FilterTier;
+  searchQuery?: string;
+  onSelectStar?: (star: Star, rank: number) => void;
+}) {
   const router = useRouter();
   const hostRef = useRef<HTMLDivElement>(null);
   const spritesRef = useRef<Map<string, StarSprite>>(new Map());
@@ -25,7 +36,16 @@ export function GalaxyCanvas({ stars, onSelectStar }: { stars: Star[]; onSelectS
 
   useEffect(() => { pausedRef.current = paused; speedRef.current = speed; }, [paused, speed]);
 
-  const { appRef, currentZoom } = useGalaxyScene(hostRef, spritesRef, trailsRef, viewportRef, pausedRef, speedRef);
+  const { appRef, currentZoom } = useGalaxyScene(
+    hostRef,
+    spritesRef,
+    trailsRef,
+    viewportRef,
+    pausedRef,
+    speedRef,
+    filterTier,
+    searchQuery
+  );
 
   const handleStarClick = useCallback((star: Star) => {
     sound.playSelect();

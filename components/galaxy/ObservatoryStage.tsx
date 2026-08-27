@@ -1,10 +1,10 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo, useCallback } from "react";
 import { TerminalWindowBar } from "@/components/ui/TerminalWindowBar";
 import { GalaxyCanvas } from "@/components/galaxy/GalaxyCanvas";
 import { GalaxyListView } from "@/components/galaxy/GalaxyListView";
-import { ObservatoryHUD } from "@/components/galaxy/ObservatoryHUD";
+import { ObservatoryHUD, type FilterTier } from "@/components/galaxy/ObservatoryHUD";
 import { FloatingTicker } from "@/components/galaxy/FloatingTicker";
 import { SectorMinimap } from "@/components/galaxy/SectorMinimap";
 import { LeaderboardDrawer } from "@/components/galaxy/LeaderboardDrawer";
@@ -21,6 +21,8 @@ export function ObservatoryStage({ initialStars = [] }: { initialStars?: Star[] 
   const setStars = useGalaxyStore((state) => state.setStars);
 
   const [view, setView] = useState<"galaxy" | "list">("galaxy");
+  const [filterTier, setFilterTier] = useState<FilterTier>("all");
+  const [searchQuery, setSearchQuery] = useState("");
   const [leaderboardOpen, setLeaderboardOpen] = useState(false);
   const [paletteOpen, setPaletteOpen] = useState(false);
   const [selectedStar, setSelectedStar] = useState<{ star: Star; rank: number } | null>(null);
@@ -35,18 +37,30 @@ export function ObservatoryStage({ initialStars = [] }: { initialStars?: Star[] 
     return () => { cancelled = true; unsubscribe(); };
   }, [initialStars, setStars]);
 
+  const currentStars = stars.length ? stars : initialStars;
+  const activeList = useMemo(() => {
+    return [...currentStars].filter((s) => s.status === "active").sort((a, b) => b.totalBidCents - a.totalBidCents);
+  }, [currentStars]);
+
+  const cycleStar = useCallback((offset: number) => {
+    if (!activeList.length) return;
+    setSelectedStar((prev) => {
+      const curIdx = prev ? activeList.findIndex((s) => s.id === prev.star.id) : -1;
+      const nextIdx = (curIdx + offset + activeList.length) % activeList.length;
+      return { star: activeList[nextIdx], rank: nextIdx + 1 };
+    });
+  }, [activeList]);
+
   useEffect(() => {
     const handleKey = (e: KeyboardEvent) => {
-      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") {
-        e.preventDefault();
-        setPaletteOpen((prev) => !prev);
-      }
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") { e.preventDefault(); setPaletteOpen((prev) => !prev); }
+      if (document.activeElement?.tagName === "INPUT" || document.activeElement?.tagName === "TEXTAREA") return;
+      if (e.key === "j" || e.key === "ArrowDown") { e.preventDefault(); cycleStar(1); }
+      if (e.key === "k" || e.key === "ArrowUp") { e.preventDefault(); cycleStar(-1); }
     };
     window.addEventListener("keydown", handleKey);
     return () => window.removeEventListener("keydown", handleKey);
-  }, []);
-
-  const currentStars = stars.length ? stars : initialStars;
+  }, [cycleStar]);
 
   return (
     <div className="terminal-window relative flex min-h-[85vh] w-full flex-col overflow-hidden rounded-xl border border-white/[0.08] sm:min-h-[88vh]">
@@ -62,6 +76,10 @@ export function ObservatoryStage({ initialStars = [] }: { initialStars?: Star[] 
 
       <ObservatoryHUD
         stars={currentStars}
+        filterTier={filterTier}
+        onSelectTier={setFilterTier}
+        searchQuery={searchQuery}
+        onSearchChange={setSearchQuery}
         onOpenLeaderboard={() => setLeaderboardOpen(true)}
         onOpenPalette={() => setPaletteOpen(true)}
       />
@@ -69,7 +87,7 @@ export function ObservatoryStage({ initialStars = [] }: { initialStars?: Star[] 
       <div className="relative flex-1 bg-[#07070b]">
         {view === "galaxy" ? (
           <div className="h-full w-full">
-            <GalaxyCanvas stars={currentStars} onSelectStar={(star, rank) => setSelectedStar({ star, rank })} />
+            <GalaxyCanvas stars={currentStars} filterTier={filterTier} searchQuery={searchQuery} onSelectStar={(star, rank) => setSelectedStar({ star, rank })} />
           </div>
         ) : (
           <div className="mx-auto max-w-4xl p-4 sm:p-6">
@@ -78,7 +96,6 @@ export function ObservatoryStage({ initialStars = [] }: { initialStars?: Star[] 
         )}
       </div>
 
-      {/* Bottom Floating Telemetry & Minimap HUD */}
       <div className="pointer-events-none absolute bottom-2.5 left-2.5 right-2.5 z-20 flex flex-wrap items-end justify-between gap-2 sm:bottom-3 sm:left-3 sm:right-3">
         <div className="flex items-center gap-2">
           <FloatingTicker initialStars={currentStars} />
@@ -86,27 +103,9 @@ export function ObservatoryStage({ initialStars = [] }: { initialStars?: Star[] 
         </div>
       </div>
 
-      <LeaderboardDrawer
-        stars={currentStars}
-        open={leaderboardOpen}
-        onClose={() => setLeaderboardOpen(false)}
-        onSelectStar={(star, rank) => setSelectedStar({ star, rank })}
-      />
-
-      <StarPreviewModal
-        star={selectedStar?.star ?? null}
-        rank={selectedStar?.rank ?? 1}
-        onClose={() => setSelectedStar(null)}
-      />
-
-      <CommandPalette
-        stars={currentStars}
-        open={paletteOpen}
-        onClose={() => setPaletteOpen(false)}
-        onSelectStar={(star, rank) => setSelectedStar({ star, rank })}
-        onToggleView={() => setView((v) => (v === "galaxy" ? "list" : "galaxy"))}
-        onResetCamera={() => {}}
-      />
+      <LeaderboardDrawer stars={currentStars} open={leaderboardOpen} onClose={() => setLeaderboardOpen(false)} onSelectStar={(star, rank) => setSelectedStar({ star, rank })} />
+      <StarPreviewModal star={selectedStar?.star ?? null} rank={selectedStar?.rank ?? 1} onClose={() => setSelectedStar(null)} onNextStar={() => cycleStar(1)} onPrevStar={() => cycleStar(-1)} />
+      <CommandPalette stars={currentStars} open={paletteOpen} onClose={() => setPaletteOpen(false)} onSelectStar={(star, rank) => setSelectedStar({ star, rank })} onToggleView={() => setView((v) => (v === "galaxy" ? "list" : "galaxy"))} onResetCamera={() => {}} />
     </div>
   );
 }

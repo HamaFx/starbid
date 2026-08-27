@@ -4,6 +4,7 @@ import { drawAccretionGuides, drawSingularityCore } from "@/components/galaxy/Ca
 import { AmbientDust } from "@/components/galaxy/AmbientDust";
 import { OrbitTrails } from "@/components/galaxy/OrbitTrails";
 import { GalaxyViewport } from "@/components/galaxy/GalaxyViewport";
+import type { FilterTier } from "@/components/galaxy/ObservatoryHUD";
 import type { StarSprite } from "@/components/galaxy/StarSprite";
 
 export const BASE_WIDTH = 1200;
@@ -15,7 +16,9 @@ export function useGalaxyScene(
   trailsRef: React.RefObject<OrbitTrails | null>,
   viewportRef: React.RefObject<GalaxyViewport | null>,
   pausedRef: React.RefObject<boolean>,
-  speedRef: React.RefObject<number>
+  speedRef: React.RefObject<number>,
+  filterTier: FilterTier = "all",
+  searchQuery = ""
 ) {
   const [currentZoom, setCurrentZoom] = useState(1);
   const appRef = useRef<Application | null>(null);
@@ -88,6 +91,28 @@ export function useGalaxyScene(
       appRef.current = null;
     };
   }, [hostRef, spritesRef, trailsRef, viewportRef, pausedRef, speedRef]);
+
+  // Update filter highlights on sprites
+  useEffect(() => {
+    const sprites = spritesRef.current;
+    if (!sprites) return;
+    const q = searchQuery.trim().toLowerCase();
+
+    sprites.forEach((sprite) => {
+      let isMatch = true;
+      if (filterTier === "core") isMatch = sprite.rank === 0;
+      else if (filterTier === "photon") isMatch = sprite.rank >= 1 && sprite.rank < 3;
+      else if (filterTier === "inner") isMatch = sprite.rank >= 3 && sprite.rank < 8;
+      else if (filterTier === "founding") isMatch = Boolean(sprite.star.isFounding);
+
+      if (isMatch && q) {
+        isMatch = sprite.star.name.toLowerCase().includes(q) || Boolean(sprite.star.xHandle?.toLowerCase().includes(q));
+      }
+
+      const isDimmed = (filterTier !== "all" || q.length > 0) && !isMatch;
+      sprite.setFilterState(isDimmed, isMatch && q.length > 0);
+    });
+  }, [spritesRef, filterTier, searchQuery]);
 
   return { appRef, currentZoom };
 }

@@ -2,37 +2,37 @@
 
 import { useEffect } from "react";
 import Link from "next/link";
+import { sound } from "@/components/galaxy/AudioFeedback";
 import type { Star } from "@/lib/types";
 
 export function StarPreviewModal({
   star,
   rank,
   onClose,
+  onNextStar,
+  onPrevStar,
 }: {
   star: Star | null;
   rank: number;
   onClose: () => void;
+  onNextStar?: () => void;
+  onPrevStar?: () => void;
 }) {
   useEffect(() => {
-    const handleKey = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
+    const handleKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+      if (e.key === "ArrowRight" && onNextStar) { sound.playTick(); onNextStar(); }
+      if (e.key === "ArrowLeft" && onPrevStar) { sound.playTick(); onPrevStar(); }
+    };
     window.addEventListener("keydown", handleKey);
     return () => window.removeEventListener("keydown", handleKey);
-  }, [onClose]);
+  }, [onClose, onNextStar, onPrevStar]);
 
   if (!star) return null;
 
   return (
-    <div
-      role="dialog"
-      aria-modal="true"
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-xs font-mono"
-      onClick={onClose}
-    >
-      <div
-        className="terminal-window w-full max-w-md rounded-xl overflow-hidden shadow-2xl"
-        onClick={(e) => e.stopPropagation()}
-      >
-        {/* Terminal Header */}
+    <div role="dialog" aria-modal="true" className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-xs font-mono" onClick={onClose}>
+      <div className="terminal-window w-full max-w-md rounded-xl overflow-hidden shadow-2xl" onClick={(e) => e.stopPropagation()}>
         <div className="terminal-header flex h-8 items-center justify-between px-3 text-[11px] text-[#71717a]">
           <div className="flex items-center gap-1.5">
             <span className="h-2.5 w-2.5 rounded-full bg-[#ff5f56]" />
@@ -43,7 +43,6 @@ export function StarPreviewModal({
           <button type="button" onClick={onClose} className="hover:text-[#f3f4f6]">[x]</button>
         </div>
 
-        {/* Body Content */}
         <div className="p-4 text-xs space-y-3">
           <div className="flex items-baseline justify-between border-b border-white/[0.04] pb-2">
             <div>
@@ -66,7 +65,18 @@ export function StarPreviewModal({
             </div>
           </div>
 
-          <div className="pt-2 flex gap-2">
+          {/* Navigation Bar */}
+          <div className="flex items-center justify-between border-t border-b border-white/[0.04] py-1.5 text-[10px] text-[#71717a]">
+            <button type="button" onClick={() => { sound.playTick(); onPrevStar?.(); }} className="hover:text-[#38bdf8]">
+              ← [prev]
+            </button>
+            <span className="text-[#52525b]">use ←/→ keys</span>
+            <button type="button" onClick={() => { sound.playTick(); onNextStar?.(); }} className="hover:text-[#38bdf8]">
+              [next] →
+            </button>
+          </div>
+
+          <div className="pt-1 flex gap-2">
             <a
               href={`/api/click/${encodeURIComponent(star.id)}`}
               target="_blank"
