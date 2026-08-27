@@ -21,16 +21,13 @@ export async function banProject(projectId: string, flagId: string) {
   await requireActionAdmin();
   if (!projectId || !flagId) throw new Error("Project and flag are required");
   const client = createSupabaseAdminClient();
-  const { error } = await client.from("projects").update({ is_banned: true }).eq("id", projectId);
+  const { error } = await client.rpc("admin_ban_project", { p_project_id: projectId, p_flag_id: flagId });
   if (error) throw error;
-  await client.from("stars").update({ status: "banned" }).eq("project_id", projectId);
-  await updateModerationFlag(flagId, "actioned");
 }
 
 export async function revokeProjectToken(projectId: string, flagId: string) {
   await requireActionAdmin();
   const client = createSupabaseAdminClient();
-  const { error } = await client.from("projects").update({ claim_token_hash: "revoked" }).eq("id", projectId);
+  const { error } = await client.rpc("admin_revoke_project_token", { p_project_id: projectId, p_flag_id: flagId });
   if (error) throw error;
-  await updateModerationFlag(flagId, "actioned");
 }

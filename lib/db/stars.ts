@@ -15,6 +15,7 @@ export async function getPublicStar(
   client: SupabaseClient<Database>,
   starId: string,
 ): Promise<Star | null> {
-  const stars = await listPublicStars(client);
-  return stars.find((star) => star.id === starId) ?? null;
+  const { data, error } = await client.rpc("get_public_star", { p_star_id: starId });
+  if (error) throw error;
+  return data?.[0] ? publicStarFromRow(data[0] as unknown as PublicStarRow) : null;
 }

@@ -5,5 +5,5 @@ export const dynamic = "force-dynamic";
 
 export function GET() {
   const environment = validateEnvironment();
-  return NextResponse.json({ status: environment.valid ? "ok" : "degraded", environment: { valid: environment.valid, missing: environment.missing, optionalMissing: environment.optionalMissing } }, { status: environment.valid ? 200 : 503 });
+  return NextResponse.json({ status: environment.valid ? "ok" : "degraded" }, { status: environment.valid ? 200 : 503, headers: { "Cache-Control": "no-store" } });
 }

@@ -44,7 +44,7 @@ export function NewStarForm() {
         ["logo_url", "Logo URL (optional)", "url"],
         ["x_handle", "X handle (optional)", "text"],
         ["email", "Receipt email", "email"],
-      ].map(([name, placeholder, type]) => <input key={name} name={name} type={type} required={name !== "logo_url" && name !== "x_handle"} placeholder={placeholder} className="w-full rounded-xl border border-white/10 bg-[#0a0a14] px-4 py-3 text-sm outline-none focus:border-[#4cc9f0]" />)}
+      ].map(([name, placeholder, type]) => <div key={name}><label htmlFor={`create-${name}`} className="sr-only">{placeholder}</label><input id={`create-${name}`} name={name} type={type} required={name !== "logo_url" && name !== "x_handle"} placeholder={placeholder} className="w-full rounded-xl border border-white/10 bg-[#0a0a14] px-4 py-3 text-sm outline-none focus:border-[#4cc9f0]" /></div>)}
       <input name="amount" type="number" min="3" step="0.01" defaultValue="3" required placeholder="Opening bid ($)" className="w-full rounded-xl border border-white/10 bg-[#0a0a14] px-4 py-3 font-mono text-sm outline-none focus:border-[#4cc9f0]" />
       {!devPayment && <TurnstileWidget onToken={setTurnstileToken} />}
       <p className="text-xs leading-5 text-[#8f8c96]">Payment is final and non-refundable. Your rank is determined at payment confirmation and is not guaranteed.</p>

@@ -10,7 +10,8 @@ export async function enforceRateLimit(key: string, limit: number, windowMs: num
   const response = await fetch(`${url}/pipeline`, {
     method: "POST",
     headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
-    body: JSON.stringify([["INCR", key], ["PEXPIRE", key, windowMs]]),
+    body: JSON.stringify([["INCR", key], ["PEXPIRE", key, windowMs, "NX"]]),
+    signal: AbortSignal.timeout(3_000),
   });
   if (!response.ok) throw new Error("Rate-limit service is unavailable");
   const result = (await response.json()) as Array<{ result?: number }>;

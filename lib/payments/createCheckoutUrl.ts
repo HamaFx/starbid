@@ -1,3 +1,4 @@
+import { MAX_BID_CENTS } from "@/lib/config/env";
 import type { CheckoutParams } from "@/lib/payments/types";
 
 const API_URL = "https://api.lemonsqueezy.com/v1/checkouts";
@@ -7,7 +8,7 @@ export async function createCheckoutUrl(params: CheckoutParams): Promise<string>
   const storeId = process.env.LEMONSQUEEZY_STORE_ID;
   const variantId = process.env.LEMONSQUEEZY_VARIANT_ID;
   if (!apiKey || !storeId || !variantId) throw new Error("Lemon Squeezy configuration is missing");
-  if (!Number.isSafeInteger(params.amountCents) || params.amountCents < 300) throw new Error("Invalid checkout amount");
+  if (!Number.isSafeInteger(params.amountCents) || params.amountCents < 300 || params.amountCents > MAX_BID_CENTS) throw new Error("Invalid checkout amount");
 
   const response = await fetch(API_URL, {
     method: "POST",

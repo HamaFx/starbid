@@ -1,12 +1,10 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { exportClaimTokens, readAllClaimTokens } from "@/components/dashboard/ClaimTokenStorage";
 
 export function MyStarsList() {
-  const [entries, setEntries] = useState<{ starId: string; token: string }[]>([]);
-
-  useEffect(() => setEntries(readAllClaimTokens()), []);
+  const [entries] = useState<{ starId: string; token: string }[]>(() => readAllClaimTokens());
 
   return (
     <section className="rounded-2xl border border-white/10 bg-[#0a0a14] p-5">

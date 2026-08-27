@@ -6,16 +6,15 @@ import { issueActionGrant } from "@/lib/db/adminActions";
 import { generateClaimToken, hashClaimToken } from "@/lib/identity/claimToken";
 import { verifyTurnstile } from "@/lib/turnstile";
 import { enforceRateLimit } from "@/lib/rateLimit";
+import { MAX_BID_CENTS, paymentsEnabled } from "@/lib/config/env";
 import type { ProjectDraft } from "@/lib/types";
 
 export async function startNewStarCheckout(input: ProjectDraft & { turnstileToken: string; amountCents: number }) {
-  if (!process.env.LEMONSQUEEZY_API_KEY || !process.env.LEMONSQUEEZY_STORE_ID || !process.env.LEMONSQUEEZY_VARIANT_ID) {
-    throw new Error("Payments are temporarily unavailable. Please try again later.");
-  }
+  if (!paymentsEnabled()) throw new Error("Payments are temporarily unavailable. Please try again later.");
   await verifyTurnstile(input.turnstileToken);
   const rate = await enforceRateLimit("new-star:server", 3, 60 * 60 * 1000);
   if (!rate.success) throw new Error("Too many star attempts. Try again later.");
-  if (!Number.isSafeInteger(input.amountCents) || input.amountCents < 300) throw new Error("Minimum bid is $3.00");
+  if (!Number.isSafeInteger(input.amountCents) || input.amountCents < 300 || input.amountCents > MAX_BID_CENTS) throw new Error("Bid amount is outside the allowed range");
 
   const client = await createSupabaseServerClient();
   const rawToken = generateClaimToken();

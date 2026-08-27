@@ -18,7 +18,7 @@ begin
   if exists (select 1 from public.pending_bids where lemonsqueezy_order_id = p_ls_order_id) then return; end if;
   select * into v_pending from public.pending_bids where id = p_pending_id and status = 'awaiting_payment' for update;
   if not found then raise exception 'pending bid not found or already processed'; end if;
-  if p_amount_cents is not null and p_amount_cents <> v_pending.amount_cents then raise exception 'payment amount mismatch'; end if;
+  if p_amount_cents is null or p_amount_cents <> v_pending.amount_cents then raise exception 'payment amount mismatch'; end if;
 
   if v_pending.kind = 'new_star' then
     insert into public.projects(name, logo_url, link_url, x_handle, email, claim_token_hash)
@@ -35,7 +35,7 @@ begin
   end if;
 
   select * into v_target from public.stars where status = 'active' and id <> v_star.id order by total_bid_cents desc, entered_at asc limit 1 for update;
-  if found and v_star.total_bid_cents > v_target.total_bid_cents and (v_target.immunity_until is null or v_target.immunity_until <= now()) and v_star.total_bid_cents >= (v_target.total_bid_cents * 115) / 100 then
+  if found and v_star.total_bid_cents > v_target.total_bid_cents and (v_target.immunity_until is null or v_target.immunity_until <= now()) and v_star.total_bid_cents::numeric >= (v_target.total_bid_cents::numeric * 115) / 100 then
     update public.stars set immunity_until = now() + interval '60 seconds' where id = v_star.id;
     v_event_type := 'singularity_takeover';
   end if;

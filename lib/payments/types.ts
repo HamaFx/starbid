@@ -29,5 +29,5 @@ export type ParsedOrder = {
   eventName: string;
   orderId: string;
   pendingBidId: string;
-  amountCents: number | null;
+  amountCents: number;
 };

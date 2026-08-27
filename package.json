@@ -2,14 +2,16 @@
   "name": "supermassive-gravity-well",
   "version": "0.1.0",
   "private": true,
+  "type": "module",
   "scripts": {
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint",
+    "lint": "eslint .",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "smoke": "node tests/browser-smoke.mjs",
+    "supabase:lint": "pnpm dlx supabase@latest db lint --local --workdir supabase",
     "test:local-payment": "node tests/local-payment-flow.mjs",
     "test:local-phase1": "node tests/local-phase1-flow.mjs"
   },
@@ -30,7 +32,9 @@
     "autoprefixer": "latest",
     "postcss": "latest",
     "tailwindcss": "latest",
-    "typescript": "latest",
-    "vitest": "latest"
+    "typescript": "^5.9.3",
+    "vitest": "latest",
+    "eslint": "^9.0.0",
+    "eslint-config-next": "latest"
   }
 }

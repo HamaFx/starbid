@@ -37,7 +37,7 @@ create table public.stars (
 
 create index stars_rank_idx on public.stars (total_bid_cents desc) where status = 'active';
 
-create view public.public_stars as
+create view public.public_stars with (security_invoker = true) as
 select s.id as star_id, s.project_id, s.total_bid_cents, s.angle_seed,
   s.entered_at, s.immunity_until, s.d_name as name, s.d_logo_url as logo_url,
   s.d_link_url as link_url, s.d_x_handle as x_handle, s.d_verified as verified,

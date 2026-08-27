@@ -44,6 +44,7 @@ export type Database = {
       create_pending_new_star: { Args: { p_grant_id: string; p_draft: Record<string, unknown>; p_claim_token_hash: string; p_amount_cents: number }; Returns: string };
       create_pending_fuel: { Args: { p_star_id: string; p_claim_token: string; p_amount_cents: number }; Returns: string };
       list_public_stars: { Args: Record<string, never>; Returns: PublicStar[] };
+      get_public_star: { Args: { p_star_id: string }; Returns: PublicStar[] };
       list_public_bid_events: { Args: { p_limit?: number }; Returns: { star_id: string; amount_cents: number; resulting_total_cents: number; event_type: string; created_at: string }[] };
       get_star_analytics: { Args: { p_star_id: string; p_claim_token: string }; Returns: { total_clicks: number; total_bid_events: number; total_bid_cents: number; last_bid_at: string | null }[] };
       get_star_analytics_history: { Args: { p_star_id: string; p_claim_token: string; p_days?: number }; Returns: { day: string; clicks: number; bid_events: number; bid_cents: number }[] };
@@ -52,6 +53,8 @@ export type Database = {
       get_project_email: { Args: { p_pending_id: string }; Returns: { email: string | null; project_name: string; star_id: string; amount_cents: number }[] };
       flag_project_chargeback: { Args: { p_order_id: string; p_reason?: string }; Returns: string };
       find_recovery_projects: { Args: { p_email: string }; Returns: { project_id: string; project_name: string; link_url: string }[] };
+      admin_ban_project: { Args: { p_project_id: string; p_flag_id: string }; Returns: undefined };
+      admin_revoke_project_token: { Args: { p_project_id: string; p_flag_id: string }; Returns: undefined };
     };
     CompositeTypes: Record<string, never>;
     Enums: Record<string, never>;

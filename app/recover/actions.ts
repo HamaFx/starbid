@@ -8,11 +8,15 @@ import { generateClaimToken, hashClaimToken } from "@/lib/identity/claimToken";
 import { sendRecoveryEmail } from "@/lib/email/sendEmail";
 import { buildManageUrl } from "@/lib/identity/manageKey";
 
-export async function requestRecovery(input: { email: string; turnstileToken: string }): Promise<void> {
+export async function requestRecovery(input: { email: string; turnstileToken: string; clientIp?: string }): Promise<void> {
   const email = input.email.trim().toLowerCase();
   await verifyTurnstile(input.turnstileToken);
-  const rate = await enforceRateLimit(`recover:${email}`, 3, 60 * 60 * 1000);
-  if (!rate.success) throw new Error("Too many recovery requests. Try again later.");
+  const ip = input.clientIp?.trim() || "unknown";
+  const [emailRate, ipRate] = await Promise.all([
+    enforceRateLimit(`recover:email:${email}`, 3, 60 * 60 * 1000),
+    enforceRateLimit(`recover:ip:${ip}`, 10, 60 * 60 * 1000),
+  ]);
+  if (!emailRate.success || !ipRate.success) throw new Error("Too many recovery requests. Try again later.");
   await issueActionGrant("recover");
 
   const client = createSupabaseAdminClient();

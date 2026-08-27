@@ -48,7 +48,7 @@ begin
 
   if found and v_star.total_bid_cents > v_target.total_bid_cents
     and (v_target.immunity_until is null or v_target.immunity_until <= now())
-    and v_star.total_bid_cents >= (v_target.total_bid_cents * 115) / 100 then
+    and v_star.total_bid_cents::numeric >= (v_target.total_bid_cents::numeric * 115) / 100 then
     update public.stars set immunity_until = now() + interval '60 seconds' where id = v_star.id;
     v_event_type := 'singularity_takeover';
   end if;

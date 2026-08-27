@@ -1,10 +1,13 @@
 project_id = "gravity-well"
 
+# Local development defaults; adjust ports if another Supabase project is running.
+
 [api]
 enabled = true
 
 [db]
 port = 54322
+major_version = 15
 
 [db.pooler]
 enabled = false

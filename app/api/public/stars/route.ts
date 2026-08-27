@@ -8,7 +8,7 @@ const headers = { "Access-Control-Allow-Origin": "*", "Access-Control-Allow-Meth
 export function OPTIONS() { return new NextResponse(null, { status: 204, headers }); }
 
 export async function GET(request: Request) {
-  const ip = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "anonymous";
+  const ip = request.headers.get("x-real-ip") ?? "anonymous";
   const rate = await enforceRateLimit(`public-api:stars:${ip}`, 60, 60_000);
   if (!rate.success) return NextResponse.json({ error: "Rate limit exceeded" }, { status: 429, headers });
   try {
