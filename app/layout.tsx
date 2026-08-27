@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import { SkipLink } from "@/components/ui/SkipLink";
+import { MobileNav } from "@/components/ui/MobileNav";
 
 export const metadata: Metadata = {
   title: "StarBid — The Living Project Galaxy",
@@ -15,7 +16,11 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body><SkipLink />{children}</body>
+      <body className="pb-16 sm:pb-0">
+        <SkipLink />
+        {children}
+        <MobileNav />
+      </body>
     </html>
   );
 }

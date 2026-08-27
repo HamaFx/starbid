@@ -3,6 +3,7 @@
 :root {
   --void: #05050a;
   --void-raised: #0a0a14;
+  --void-surface: #0f0f1c;
   --outer-rim: #7a2e1d;
   --mid-disk: #ff6b35;
   --inner-disk: #ffb627;
@@ -12,37 +13,86 @@
   --rank-down: #f43f5e;
   --text-primary: #fff4e0;
   --text-muted: #8f8c96;
-  --line: rgb(255 244 224 / 0.12);
+  --line: rgb(255 244 224 / 0.1);
+  --line-strong: rgb(255 244 224 / 0.2);
+  --font-display: -apple-system, BlinkMacSystemFont, "Space Grotesk", "Segoe UI", sans-serif;
+  --font-sans: -apple-system, BlinkMacSystemFont, "Geist", "Segoe UI", Roboto, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
 }
 
 * {
   box-sizing: border-box;
 }
 
+html {
+  color-scheme: dark;
+}
+
 html,
 body {
   min-height: 100%;
-}
-
-body {
-  margin: 0;
   background: var(--void);
   color: var(--text-primary);
-  font-family: Arial, sans-serif;
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-display);
+}
+
+.font-mono {
+  font-family: var(--font-mono);
 }
 
 button,
 a,
-input {
+input,
+select,
+textarea {
   font: inherit;
 }
 
 button,
 a {
   -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+
+:focus-visible {
+  outline: 2px solid var(--chrome);
+  outline-offset: 2px;
 }
 
 ::selection {
   background: var(--chrome);
   color: var(--void);
+}
+
+/* Custom subtle scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--void);
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 244, 224, 0.15);
+  border-radius: 9999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(76, 201, 240, 0.4);
+}
+
+.accretion-glow {
+  background: radial-gradient(circle at 50% 50%, rgba(255, 107, 53, 0.08) 0%, rgba(255, 182, 39, 0.03) 45%, transparent 70%);
+}
+
+.core-pulse {
+  box-shadow: 0 0 40px -10px rgba(255, 244, 224, 0.3), 0 0 80px -20px rgba(255, 182, 39, 0.2);
 }
