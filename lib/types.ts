@@ -52,6 +52,7 @@ export type GalaxyEvent = {
   totalBidCents: number;
   eventType: EventType;
   name: string;
+  timestamp?: string;
 };
 
 export type PendingStatus = {

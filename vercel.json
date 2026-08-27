@@ -3,5 +3,10 @@
   "buildCommand": "pnpm build",
   "installCommand": "pnpm install --frozen-lockfile",
   "devCommand": "pnpm dev",
-  "cleanUrls": true
+  "cleanUrls": true,
+  "functions": {
+    "app/api/**/*": {
+      "maxDuration": 30
+    }
+  }
 }

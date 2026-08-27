@@ -15,26 +15,29 @@
     "test:local-payment": "node tests/local-payment-flow.mjs",
     "test:local-phase1": "node tests/local-phase1-flow.mjs"
   },
+  "engines": {
+    "node": ">=20"
+  },
   "dependencies": {
-    "@tailwindcss/postcss": "latest",
-    "@supabase/ssr": "latest",
-    "@supabase/supabase-js": "latest",
-    "next": "latest",
-    "pixi.js": "^8.14.0",
-    "react": "latest",
-    "react-dom": "latest",
-    "zustand": "latest"
+    "@tailwindcss/postcss": "^4.3.3",
+    "@supabase/ssr": "^0.12.5",
+    "@supabase/supabase-js": "^2.112.4",
+    "next": "^16.3.3",
+    "pixi.js": "^8.20.0",
+    "react": "^19.2.8",
+    "react-dom": "^19.2.8",
+    "zustand": "^5.0.15"
   },
   "devDependencies": {
-    "@types/node": "latest",
-    "@types/react": "latest",
-    "@types/react-dom": "latest",
-    "autoprefixer": "latest",
-    "postcss": "latest",
-    "tailwindcss": "latest",
+    "@types/node": "^26.3.0",
+    "@types/react": "^19.2.18",
+    "@types/react-dom": "^19.2.5",
+    "autoprefixer": "^10.5.4",
+    "postcss": "^8.5.26",
+    "tailwindcss": "^4.3.3",
     "typescript": "^5.9.3",
-    "vitest": "latest",
-    "eslint": "^9.0.0",
-    "eslint-config-next": "latest"
+    "vitest": "^4.1.11",
+    "eslint": "^9.39.5",
+    "eslint-config-next": "^16.3.3"
   }
 }

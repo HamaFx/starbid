@@ -77,7 +77,7 @@ export function CommandPalette({
   };
 
   return (
-    <div role="dialog" aria-modal="true" className="fixed inset-0 z-50 flex items-start justify-center bg-black/60 pt-[12vh] p-4 backdrop-blur-xs font-mono" onClick={handleClose}>
+    <div role="dialog" aria-modal="true" aria-labelledby="cmd-palette-title" className="fixed inset-0 z-50 flex items-start justify-center bg-black/60 pt-[12vh] p-4 backdrop-blur-xs font-mono" onClick={handleClose}>
       <div className="terminal-window w-full max-w-lg rounded-xl overflow-hidden shadow-2xl" onClick={(e) => e.stopPropagation()}>
         <div className="terminal-header flex h-8 items-center justify-between px-3 text-[11px] text-[#71717a]">
           <div className="flex items-center gap-1.5">
@@ -85,7 +85,7 @@ export function CommandPalette({
             <span className="h-2.5 w-2.5 rounded-full bg-[#ffbd2e]" />
             <span className="h-2.5 w-2.5 rounded-full bg-[#27c93f]" />
           </div>
-          <span>command_palette --fuzzy</span>
+          <span id="cmd-palette-title">command_palette --fuzzy</span>
           <button type="button" onClick={handleClose} className="text-[10px] text-[#71717a] hover:text-[#f3f4f6]">[esc]</button>
         </div>
 

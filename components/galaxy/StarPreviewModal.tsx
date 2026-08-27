@@ -31,7 +31,7 @@ export function StarPreviewModal({
   if (!star) return null;
 
   return (
-    <div role="dialog" aria-modal="true" className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-xs font-mono" onClick={onClose}>
+    <div role="dialog" aria-modal="true" aria-labelledby="star-preview-title" className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-xs font-mono" onClick={onClose}>
       <div className="terminal-window w-full max-w-md rounded-xl overflow-hidden shadow-2xl" onClick={(e) => e.stopPropagation()}>
         <div className="terminal-header flex h-8 items-center justify-between px-3 text-[11px] text-[#71717a]">
           <div className="flex items-center gap-1.5">
@@ -46,7 +46,7 @@ export function StarPreviewModal({
         <div className="p-4 text-xs space-y-3">
           <div className="flex items-baseline justify-between border-b border-white/[0.04] pb-2">
             <div>
-              <span className="text-[#38bdf8] text-sm font-bold">{star.name}</span>
+              <span id="star-preview-title" className="text-[#38bdf8] text-sm font-bold">{star.name}</span>
               {star.xHandle && <p className="text-[10px] text-[#52525b]">{star.xHandle}</p>}
             </div>
             <span className="rounded bg-white/5 px-2 py-0.5 text-[#fbbf24] font-semibold">

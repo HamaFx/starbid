@@ -1,3 +1,5 @@
+-- Migration 0022: Chargeback RPC Idempotency Hardening
+
 create or replace function public.flag_project_chargeback(p_order_id text, p_reason text default 'Payment dispute')
 returns uuid
 language plpgsql security definer set search_path = public

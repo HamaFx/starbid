@@ -53,13 +53,14 @@ export function LeaderboardTable({ stars }: { stars: Star[] }) {
       {/* Table Data */}
       <div className="overflow-x-auto">
         <table className="w-full text-left text-xs">
+          <caption className="sr-only">Live project orbital gravity leaderboard</caption>
           <thead className="border-b border-white/[0.08] text-[10px] text-[#52525b]">
             <tr>
-              <th className="py-2 px-3">RNK</th>
-              <th className="py-2 px-3">PROJECT</th>
-              <th className="py-2 px-3">HANDLE</th>
-              <th className="py-2 px-3 text-right">GRAVITY</th>
-              <th className="py-2 px-3 text-right">ACTION</th>
+              <th scope="col" className="py-2 px-3">RNK</th>
+              <th scope="col" className="py-2 px-3">PROJECT</th>
+              <th scope="col" className="py-2 px-3">HANDLE</th>
+              <th scope="col" className="py-2 px-3 text-right">GRAVITY</th>
+              <th scope="col" className="py-2 px-3 text-right">ACTION</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-white/[0.04]">

@@ -1,8 +1,18 @@
 class CelestialAudio {
   private ctx: AudioContext | null = null;
+  private muted = false;
+
+  public setMuted(muted: boolean) {
+    this.muted = muted;
+  }
+
+  public isMuted(): boolean {
+    return this.muted;
+  }
 
   private init() {
-    if (typeof window === "undefined") return null;
+    if (typeof window === "undefined" || this.muted) return null;
+    if (window.matchMedia?.("(prefers-reduced-motion: reduce)").matches) return null;
     if (!this.ctx) {
       const AudioCtx = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
       if (AudioCtx) this.ctx = new AudioCtx();

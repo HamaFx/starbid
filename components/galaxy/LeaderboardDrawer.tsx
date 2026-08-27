@@ -40,6 +40,7 @@ export function LeaderboardDrawer({
   return (
     <div
       role="dialog"
+      aria-labelledby="leaderboard-title"
       aria-modal="true"
       className="fixed inset-0 z-50 flex justify-end bg-black/50 backdrop-blur-xs"
       onClick={onClose}
@@ -52,7 +53,7 @@ export function LeaderboardDrawer({
         <div className="flex items-center justify-between border-b border-white/[0.08] pb-3 text-xs">
           <div className="flex items-center gap-2">
             <span className="text-[#38bdf8]">$</span>
-            <span className="font-semibold text-[#f3f4f6]">top --gravity</span>
+            <span id="leaderboard-title" className="font-semibold text-[#f3f4f6]">top --gravity</span>
             <span className="text-[#52525b]">({sorted.length} entries)</span>
           </div>
           <button type="button" onClick={onClose} className="rounded px-1.5 py-0.5 text-xs text-[#71717a] hover:text-[#f3f4f6]">

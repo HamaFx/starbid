@@ -1,6 +1,17 @@
 type RateLimitResult = { success: boolean; remaining: number };
 
 const localHits = new Map<string, { count: number; expiresAt: number }>();
+const MAX_LOCAL_ENTRIES = 10_000;
+
+/** Prune expired entries to prevent unbounded memory growth */
+function pruneExpired(): void {
+  const now = Date.now();
+  for (const [key, entry] of localHits) {
+    if (entry.expiresAt <= now) localHits.delete(key);
+  }
+  // Safety valve: if still too large after pruning, clear entirely
+  if (localHits.size > MAX_LOCAL_ENTRIES) localHits.clear();
+}
 
 export async function enforceRateLimit(key: string, limit: number, windowMs: number): Promise<RateLimitResult> {
   const url = process.env.UPSTASH_REDIS_REST_URL;
@@ -25,5 +36,9 @@ function localRateLimit(key: string, limit: number, windowMs: number): RateLimit
   const entry = !current || current.expiresAt <= now ? { count: 0, expiresAt: now + windowMs } : current;
   entry.count += 1;
   localHits.set(key, entry);
+
+  // Periodically prune to prevent memory leaks (every ~100 calls)
+  if (localHits.size > 500 && Math.random() < 0.01) pruneExpired();
+
   return { success: entry.count <= limit, remaining: Math.max(0, limit - entry.count) };
 }

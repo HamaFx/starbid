@@ -31,6 +31,12 @@ export function useGalaxyScene(
     appRef.current = app;
     const sprites = spritesRef.current;
 
+    // Store listener references in outer scope so cleanup can access them
+    let onWheel: ((e: WheelEvent) => void) | null = null;
+    let onDown: ((e: PointerEvent) => void) | null = null;
+    let onMove: ((e: PointerEvent) => void) | null = null;
+    let onUp: (() => void) | null = null;
+
     void app.init({ width: BASE_WIDTH, height: BASE_HEIGHT, background: 0x07070b, antialias: true, resolution: Math.min(window.devicePixelRatio || 1, 2), autoDensity: true }).then(() => {
       if (!mounted || !hostRef.current) { app.destroy(true, { children: true }); return; }
       host.appendChild(app.canvas);
@@ -71,10 +77,10 @@ export function useGalaxyScene(
         trails.renderTrails(tierColors);
       });
 
-      const onWheel = (e: WheelEvent) => { e.preventDefault(); const rect = app.canvas.getBoundingClientRect(); viewport.onWheel(e.deltaY, (e.clientX - rect.left) * (BASE_WIDTH / rect.width), (e.clientY - rect.top) * (BASE_HEIGHT / rect.height), cx, cy); };
-      const onDown = (e: PointerEvent) => { viewport.startDrag(e.clientX, e.clientY); };
-      const onMove = (e: PointerEvent) => { viewport.onDrag(e.clientX, e.clientY); };
-      const onUp = () => { viewport.endDrag(); };
+      onWheel = (e: WheelEvent) => { e.preventDefault(); const rect = app.canvas.getBoundingClientRect(); viewport.onWheel(e.deltaY, (e.clientX - rect.left) * (BASE_WIDTH / rect.width), (e.clientY - rect.top) * (BASE_HEIGHT / rect.height), cx, cy); };
+      onDown = (e: PointerEvent) => { viewport.startDrag(e.clientX, e.clientY); };
+      onMove = (e: PointerEvent) => { viewport.onDrag(e.clientX, e.clientY); };
+      onUp = () => { viewport.endDrag(); };
 
       app.canvas.addEventListener("wheel", onWheel, { passive: false });
       app.canvas.addEventListener("pointerdown", onDown);
@@ -84,6 +90,8 @@ export function useGalaxyScene(
 
     return () => {
       mounted = false;
+      if (onMove) window.removeEventListener("pointermove", onMove);
+      if (onUp) window.removeEventListener("pointerup", onUp);
       sprites?.forEach((s) => s.destroy());
       sprites?.clear();
       trailsRef.current?.destroy();

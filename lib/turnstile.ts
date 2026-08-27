@@ -1,7 +1,7 @@
 type TurnstileResponse = { success: boolean; action?: string; hostname?: string; "error-codes"?: string[] };
 
 export async function verifyTurnstile(token: string, remoteip?: string, expectedAction = "new_star"): Promise<void> {
-  if (process.env.NODE_ENV !== "production" && token === "phase-0-placeholder") return;
+  if (process.env.STARBOARD_TESTING === "true" && token === "phase-0-placeholder") return;
   const secret = process.env.TURNSTILE_SECRET_KEY;
   const hostnames = new Set((process.env.TURNSTILE_HOSTNAMES ?? "").split(",").map((hostname) => hostname.trim()).filter(Boolean));
   if (!secret || !token || token.length > 2048 || !hostnames.size) throw new Error("Bot verification is required");

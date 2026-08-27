@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useMemo, useCallback } from "react";
+import { useEffect, useState, useMemo, useCallback, useRef } from "react";
 import { TerminalWindowBar } from "@/components/ui/TerminalWindowBar";
 import { GalaxyCanvas } from "@/components/galaxy/GalaxyCanvas";
 import { GalaxyListView } from "@/components/galaxy/GalaxyListView";
@@ -27,15 +27,17 @@ export function ObservatoryStage({ initialStars = [] }: { initialStars?: Star[] 
   const [paletteOpen, setPaletteOpen] = useState(false);
   const [selectedStar, setSelectedStar] = useState<{ star: Star; rank: number } | null>(null);
 
+  const initialStarsRef = useRef(initialStars);
+
   useEffect(() => {
     let cancelled = false;
-    setStars(initialStars);
+    setStars(initialStarsRef.current);
     if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) return;
     const client = createSupabaseBrowserClient();
     void listPublicStars(client).then((live) => { if (!cancelled && live.length) setStars(live); });
     const unsubscribe = subscribeToGalaxy(client);
     return () => { cancelled = true; unsubscribe(); };
-  }, [initialStars, setStars]);
+  }, [setStars]);
 
   const currentStars = stars.length ? stars : initialStars;
   const activeList = useMemo(() => {
@@ -54,13 +56,14 @@ export function ObservatoryStage({ initialStars = [] }: { initialStars?: Star[] 
   useEffect(() => {
     const handleKey = (e: KeyboardEvent) => {
       if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") { e.preventDefault(); setPaletteOpen((prev) => !prev); }
+      if (paletteOpen || leaderboardOpen || selectedStar) return;
       if (document.activeElement?.tagName === "INPUT" || document.activeElement?.tagName === "TEXTAREA") return;
       if (e.key === "j" || e.key === "ArrowDown") { e.preventDefault(); cycleStar(1); }
       if (e.key === "k" || e.key === "ArrowUp") { e.preventDefault(); cycleStar(-1); }
     };
     window.addEventListener("keydown", handleKey);
     return () => window.removeEventListener("keydown", handleKey);
-  }, [cycleStar]);
+  }, [cycleStar, paletteOpen, leaderboardOpen, selectedStar]);
 
   return (
     <div className="terminal-window relative flex min-h-[85vh] w-full flex-col overflow-hidden rounded-xl border border-white/[0.08] sm:min-h-[88vh]">

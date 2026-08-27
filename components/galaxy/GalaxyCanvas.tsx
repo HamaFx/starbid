@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState, useCallback } from "react";
+import { useEffect, useRef, useState, useCallback, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { StarSprite } from "@/components/galaxy/StarSprite";
 import { useGalaxyScene, BASE_WIDTH, BASE_HEIGHT } from "@/components/galaxy/useGalaxyScene";
@@ -47,30 +47,32 @@ export function GalaxyCanvas({
     searchQuery
   );
 
+  const activeSorted = useMemo(
+    () => [...stars].filter((s) => s.status === "active").sort((a, b) => b.totalBidCents - a.totalBidCents),
+    [stars],
+  );
+
   const handleStarClick = useCallback((star: Star) => {
     sound.playSelect();
-    const sorted = [...stars].filter((s) => s.status === "active").sort((a, b) => b.totalBidCents - a.totalBidCents);
-    const rank = sorted.findIndex((s) => s.id === star.id) + 1;
+    const rank = activeSorted.findIndex((s) => s.id === star.id) + 1;
     if (onSelectStar) onSelectStar(star, rank > 0 ? rank : 1);
     else router.push(`/star/${encodeURIComponent(star.id)}`);
-  }, [stars, onSelectStar, router]);
+  }, [activeSorted, onSelectStar, router]);
 
   const handleStarHover = useCallback((star: Star | null, x: number, y: number) => {
     if (!star) { setHovered(null); return; }
-    const sorted = [...stars].filter((s) => s.status === "active").sort((a, b) => b.totalBidCents - a.totalBidCents);
-    const rank = sorted.findIndex((s) => s.id === star.id) + 1;
+    const rank = activeSorted.findIndex((s) => s.id === star.id) + 1;
     setHovered({ star, x, y, rank: rank > 0 ? rank : 1 });
-  }, [stars]);
+  }, [activeSorted]);
 
   useEffect(() => {
     const app = appRef.current;
     if (!app) return;
-    const active = [...stars].filter((s) => s.status === "active").sort((a, b) => b.totalBidCents - a.totalBidCents);
     const maxRadius = Math.min(BASE_WIDTH, BASE_HEIGHT) * 0.44;
     const currentMap = spritesRef.current;
     const activeIds = new Set<string>();
 
-    active.forEach((star, index) => {
+    activeSorted.forEach((star, index) => {
       activeIds.add(star.id);
       const existing = currentMap.get(star.id);
       if (existing) existing.updateData(star, index, maxRadius);
@@ -89,11 +91,11 @@ export function GalaxyCanvas({
         currentMap.delete(id);
       }
     });
-  }, [stars, appRef, handleStarClick, handleStarHover]);
+  }, [activeSorted, appRef, handleStarClick, handleStarHover]);
 
   return (
     <div className="relative h-full min-h-[550px] w-full overflow-hidden rounded-xl bg-[#07070b] sm:min-h-[640px] lg:min-h-[720px] select-none cursor-grab active:cursor-grabbing">
-      <div ref={hostRef} aria-label="Interactive celestial accretion disk" role="img" className="h-full w-full" />
+      <div ref={hostRef} aria-label="Interactive celestial accretion disk — use mouse to pan and scroll to zoom" role="application" className="h-full w-full" />
       <div className="absolute bottom-2.5 right-2.5 z-20">
         <CanvasControls
           paused={paused}

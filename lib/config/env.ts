@@ -8,8 +8,15 @@ export function paymentsEnabled(): boolean {
 }
 
 export function validateEnvironment(): { valid: boolean; missing: string[]; optionalMissing: string[] } {
-  const missing = process.env.NODE_ENV === "production" ? requiredInfrastructure.filter((key) => !process.env[key]) : [];
-  const optionalMissing = process.env.NODE_ENV === "production" ? paymentKeys.filter((key) => !process.env[key]) : [];
+  const isProd = process.env.NODE_ENV === "production";
+  const missing = isProd ? requiredInfrastructure.filter((key) => !process.env[key]) : [];
+  const optionalMissing = isProd ? paymentKeys.filter((key) => !process.env[key]) : [];
+  if (process.env.NODE_ENV === "development") {
+    const devMissing = requiredInfrastructure.filter((key) => !process.env[key]);
+    if (devMissing.length) {
+      console.warn(`[StarBoard] Missing environment variables (non-fatal in dev): ${devMissing.join(", ")}`);
+    }
+  }
   return { valid: missing.length === 0, missing, optionalMissing };
 }
 

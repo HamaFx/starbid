@@ -38,7 +38,7 @@ function applyGalaxyEvent(stars: Star[], event: GalaxyEvent): Star[] {
       xHandle: null,
       totalBidCents: event.totalBidCents,
       angleSeed: deterministicAngle(event.starId),
-      enteredAt: new Date().toISOString(),
+      enteredAt: event.timestamp ?? new Date().toISOString(),
       verified: false,
       isFounding: false,
       isDemo: false,
@@ -58,6 +58,12 @@ export const useGalaxyStore = create<GalaxyState>((set) => ({
     })),
 }));
 
-export const selectActiveStars = (state: GalaxyState): Star[] =>
-  state.stars.filter((star) => star.status === "active");
-
+// Memoized selector: returns same reference if stars haven't changed
+let _cachedStars: Star[] = [];
+let _cachedActive: Star[] = [];
+export const selectActiveStars = (state: GalaxyState): Star[] => {
+  if (state.stars === _cachedStars) return _cachedActive;
+  _cachedStars = state.stars;
+  _cachedActive = state.stars.filter((star) => star.status === "active");
+  return _cachedActive;
+};
