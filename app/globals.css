@@ -1,11 +1,11 @@
 @import "tailwindcss";
 
 :root {
-  --void: #07070b;
-  --void-surface: #0c0c12;
-  --terminal-bar: #121218;
+  --void: #060609;
+  --void-surface: #0b0b10;
+  --terminal-bar: #101016;
   --terminal-border: rgba(255, 255, 255, 0.08);
-  --terminal-border-hover: rgba(255, 255, 255, 0.16);
+  --terminal-border-hover: rgba(56, 189, 248, 0.3);
   --terminal-red: #ff5f56;
   --terminal-yellow: #ffbd2e;
   --terminal-green: #27c93f;
@@ -13,8 +13,8 @@
   --terminal-amber: #fbbf24;
   --terminal-orange: #f97316;
   --text-main: #f3f4f6;
-  --text-dim: #71717a;
-  --text-muted: #52525b;
+  --text-dim: #9ca3af;
+  --text-muted: #6b7280;
 }
 
 * {
@@ -29,6 +29,10 @@ html,
 body {
   min-height: 100%;
   background: var(--void);
+  background-image: 
+    radial-gradient(ellipse at 50% -10%, rgba(56, 189, 248, 0.06), transparent 60%),
+    radial-gradient(ellipse at 85% 100%, rgba(251, 191, 36, 0.04), transparent 50%),
+    radial-gradient(circle at 10% 50%, rgba(168, 85, 247, 0.03), transparent 40%);
   color: var(--text-main);
   font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Geist", "Segoe UI", sans-serif;
   -webkit-font-smoothing: antialiased;
@@ -55,19 +59,19 @@ a {
 }
 
 :focus-visible {
-  outline: 1px solid var(--terminal-cyan);
-  outline-offset: 1px;
+  outline: 1.5px solid var(--terminal-cyan);
+  outline-offset: 2px;
 }
 
 ::selection {
-  background: rgba(56, 189, 248, 0.25);
+  background: rgba(56, 189, 248, 0.35);
   color: #fff;
 }
 
 /* Minimal Terminal Scrollbar */
 ::-webkit-scrollbar {
-  width: 4px;
-  height: 4px;
+  width: 5px;
+  height: 5px;
 }
 
 ::-webkit-scrollbar-track {
@@ -75,23 +79,46 @@ a {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.1);
-  border-radius: 2px;
+  background: rgba(255, 255, 255, 0.12);
+  border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(255, 255, 255, 0.2);
+  background: rgba(56, 189, 248, 0.3);
 }
 
 .terminal-window {
   background: var(--void-surface);
   border: 1px solid var(--terminal-border);
-  box-shadow: 0 20px 50px -10px rgba(0, 0, 0, 0.7), 0 0 0 1px rgba(255, 255, 255, 0.04);
+  box-shadow: 
+    0 25px 60px -15px rgba(0, 0, 0, 0.8),
+    0 0 0 1px rgba(255, 255, 255, 0.03),
+    inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  backdrop-filter: blur(16px);
 }
 
 .terminal-header {
   background: var(--terminal-bar);
   border-bottom: 1px solid var(--terminal-border);
+}
+
+/* Glowing Cosmic Accents */
+.glow-cyan {
+  box-shadow: 0 0 20px -3px rgba(56, 189, 248, 0.35);
+}
+
+.glow-gold {
+  box-shadow: 0 0 20px -3px rgba(251, 191, 36, 0.35);
+}
+
+.accretion-card {
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.accretion-card:hover {
+  border-color: rgba(56, 189, 248, 0.3);
+  box-shadow: 0 8px 30px -10px rgba(56, 189, 248, 0.15);
+  transform: translateY(-1px);
 }
 
 /* Respect user preference for reduced motion */

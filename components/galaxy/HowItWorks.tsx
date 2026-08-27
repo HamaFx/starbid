@@ -1,46 +1,75 @@
 "use client";
 
-import { useState } from "react";
+import Link from "next/link";
 
 export function HowItWorks() {
-  const [open, setOpen] = useState(false);
-
   return (
-    <div className="terminal-window rounded-xl p-4 font-mono text-xs">
-      <button
-        type="button"
-        onClick={() => setOpen(!open)}
-        className="flex w-full items-center justify-between text-[#71717a] transition hover:text-[#38bdf8]"
-      >
-        <span className="flex items-center gap-2">
-          <span className="text-[#38bdf8]">$</span>
-          <span>man starbid-physics(7)</span>
-        </span>
-        <span className="text-[10px] text-[#52525b]">{open ? "[--collapse]" : "[--expand]"}</span>
-      </button>
-
-      {open && (
-        <div className="mt-4 grid gap-4 border-t border-white/[0.08] pt-4 text-[11px] leading-relaxed text-[#71717a] sm:grid-cols-3">
-          <div className="space-y-1">
-            <h3 className="font-semibold text-[#f3f4f6]">1. LOGARITHMIC ORBIT</h3>
-            <p>
-              Distance from singularity follows <code className="text-[#fbbf24]">r = rMax / (1 + ln(1 + spend))</code>. Spend is cumulative; gravity never decays.
-            </p>
-          </div>
-          <div className="space-y-1">
-            <h3 className="font-semibold text-[#f3f4f6]">2. SINGULARITY HURDLE</h3>
-            <p>
-              Dethroning rank #1 requires surpassing the current leader by <strong>+15%</strong>. A 60-second anti-snipe lock is granted.
-            </p>
-          </div>
-          <div className="space-y-1">
-            <h3 className="font-semibold text-[#f3f4f6]">3. BEARER KEY ACCESS</h3>
-            <p>
-              Zero passwords or centralized cookies. Projects are controlled via cryptographic claim tokens delivered on confirmation.
-            </p>
-          </div>
+    <section className="terminal-window rounded-xl p-5 sm:p-7 font-mono text-xs space-y-6">
+      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-white/[0.08] pb-4">
+        <div className="flex items-center gap-2">
+          <span className="text-[#38bdf8] font-bold text-sm">$</span>
+          <h2 className="text-sm sm:text-base font-bold text-[#f3f4f6]">
+            man starbid-physics(7) — Living Galaxy Protocol
+          </h2>
         </div>
-      )}
-    </div>
+        <span className="rounded bg-white/5 px-2 py-0.5 text-[10px] text-[#38bdf8]">
+          v2.0 // SINGULARITY
+        </span>
+      </div>
+
+      <div className="grid gap-4 sm:grid-cols-3">
+        {/* Card 1: Logarithmic Orbits */}
+        <div className="accretion-card rounded-lg border border-white/[0.08] bg-[#07070b] p-4 space-y-2">
+          <div className="flex items-center gap-2 text-[#38bdf8]">
+            <span className="text-base">🌌</span>
+            <h3 className="font-bold text-xs">1. LOGARITHMIC ORBIT</h3>
+          </div>
+          <p className="text-[11px] leading-relaxed text-[#71717a]">
+            Distance from the core follows <code className="text-[#fbbf24]">r = rMax / (1 + ln(1 + spend))</code>.
+            Fuel spend is cumulative. Your project remains in orbit permanently without monthly subscription fees.
+          </p>
+        </div>
+
+        {/* Card 2: Singularity Hurdle */}
+        <div className="accretion-card rounded-lg border border-white/[0.08] bg-[#07070b] p-4 space-y-2">
+          <div className="flex items-center gap-2 text-[#fbbf24]">
+            <span className="text-base">👑</span>
+            <h3 className="font-bold text-xs">2. SINGULARITY HURDLE</h3>
+          </div>
+          <p className="text-[11px] leading-relaxed text-[#71717a]">
+            Dethroning the #1 Core star requires surpassing the current leader by <strong className="text-[#f3f4f6]">+15%</strong>.
+            The new champion receives a <strong>60-second anti-snipe lock</strong> and live terminal marquee broadcast.
+          </p>
+        </div>
+
+        {/* Card 3: Cryptographic Tokens */}
+        <div className="accretion-card rounded-lg border border-white/[0.08] bg-[#07070b] p-4 space-y-2">
+          <div className="flex items-center gap-2 text-[#27c93f]">
+            <span className="text-base">🔑</span>
+            <h3 className="font-bold text-xs">3. BEARER KEY ACCESS</h3>
+          </div>
+          <p className="text-[11px] leading-relaxed text-[#71717a]">
+            Zero passwords or tracking cookies. Stars are managed via high-entropy cryptographic bearer claim tokens
+            issued immediately upon payment confirmation.
+          </p>
+        </div>
+      </div>
+
+      {/* High-Converting Launch Strip */}
+      <div className="flex flex-col sm:flex-row items-center justify-between gap-4 rounded-lg border border-[#38bdf8]/30 bg-[#38bdf8]/5 p-4">
+        <div>
+          <p className="font-bold text-[#f3f4f6] text-xs">Ready to claim your place in orbit?</p>
+          <p className="text-[11px] text-[#71717a] mt-0.5">
+            Opening bids start at $3. First 50 projects receive permanent <span className="text-[#fbbf24]">[FOUNDING STAR]</span> status.
+          </p>
+        </div>
+        <Link
+          href="/create"
+          className="shrink-0 rounded-lg border border-[#38bdf8]/60 bg-[#38bdf8] px-4 py-2 font-bold text-[#05050a] shadow-md hover:bg-[#38bdf8]/90 transition"
+        >
+          + Spawn Star ($3+) ↗
+        </Link>
+      </div>
+    </section>
   );
 }
