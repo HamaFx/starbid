@@ -53,6 +53,14 @@ export function NewStarForm() {
 
   return (
     <form onSubmit={submit} className="space-y-4 font-mono text-xs">
+      <div className="rounded border border-[#fbbf24]/40 bg-[#fbbf24]/5 p-2.5 flex items-center justify-between text-[11px] text-[#fbbf24]">
+        <div className="flex items-center gap-1.5">
+          <span className="h-1.5 w-1.5 rounded-full bg-[#fbbf24] animate-pulse" />
+          <span className="font-bold">EARLY ACCESS PERK:</span>
+          <span>Automatic [FOUNDING STAR] Golden Corona badge</span>
+        </div>
+      </div>
+
       {projectName && (
         <div className="flex items-center justify-between rounded border border-[#38bdf8]/40 bg-[#38bdf8]/5 p-2.5">
           <span className="text-[#71717a]">preview:</span>

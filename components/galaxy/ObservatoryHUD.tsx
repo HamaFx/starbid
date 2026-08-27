@@ -52,24 +52,39 @@ export function ObservatoryHUD({
           />
         </div>
 
-        {/* Telemetry Stats */}
+        {/* Telemetry Stats & Founding Scarcity */}
         <div className="hidden items-center gap-3 text-[11px] lg:flex">
           <div className="flex items-center gap-1.5 text-[#71717a]">
             <span>gravity:</span>
             <span className="font-semibold text-[#fbbf24]">${(totalGravityCents / 100).toFixed(2)}</span>
           </div>
           <span className="text-[#27272a]">|</span>
+          <div className="flex items-center gap-1 text-[#71717a]">
+            <span className="h-1.5 w-1.5 rounded-full bg-[#fbbf24] animate-pulse" />
+            <span>founding:</span>
+            <span className="font-semibold text-[#fbbf24]">
+              {Math.min(50, active.filter((s) => s.isFounding).length)}/50
+            </span>
+            <span className="text-[9px] text-[#52525b]">[LIFETIME]</span>
+          </div>
+          <span className="text-[#27272a]">|</span>
           {leader && (
             <div className="flex items-center gap-1.5 text-[#71717a]">
               <span>#1:</span>
-              <span className="text-[#f3f4f6]">{leader.name}</span>
+              <span className="text-[#f3f4f6] font-semibold">{leader.name}</span>
               <span className="text-[#fbbf24]">(${(leader.totalBidCents / 100).toFixed(2)})</span>
             </div>
           )}
           <span className="text-[#27272a]">|</span>
           <div className="flex items-center gap-1.5 text-[#71717a]">
-            <span>dethrone:</span>
-            <span className="font-semibold text-[#38bdf8]">${(hurdleCents / 100).toFixed(2)}</span>
+            <span>dethrone #1:</span>
+            <Link
+              href={leader ? `/star/${encodeURIComponent(leader.id)}` : "/create"}
+              className="font-bold text-[#38bdf8] hover:underline"
+              title="Click to view outbid target"
+            >
+              ${(hurdleCents / 100).toFixed(2)} ↗
+            </Link>
           </div>
         </div>
 
