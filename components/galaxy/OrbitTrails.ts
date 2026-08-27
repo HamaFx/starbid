@@ -1,6 +1,6 @@
 import { Container, Graphics } from "pixi.js";
 
-const MAX_PTS = 14;
+const MAX_PTS = 22;
 
 export class OrbitTrails {
   public container: Container;
@@ -45,12 +45,14 @@ export class OrbitTrails {
         const p2y = buf.y[idx2];
 
         const progress = 1 - i / buf.count;
-        const alpha = meta.alpha * Math.pow(progress, 1.6);
+        // Non-linear cubic power decay for hyper-smooth comet tail dissipation
+        const alpha = meta.alpha * Math.pow(progress, 1.8);
+        const strokeWidth = Math.max(0.4, progress * 2.2);
 
         this.gfx.moveTo(p1x, p1y).lineTo(p2x, p2y).stroke({
           color: meta.color,
           alpha,
-          width: Math.max(0.5, progress * 1.8),
+          width: strokeWidth,
         });
       }
     });
