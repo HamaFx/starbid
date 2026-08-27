@@ -23,9 +23,11 @@ export function useGalaxyScene(
   searchQuery = ""
 ) {
   const [currentZoom, setCurrentZoom] = useState(1);
+  const [isReady, setIsReady] = useState(false);
   const appRef = useRef<Application | null>(null);
   const shockwavesRef = useRef<ShockwaveSystem | null>(null);
   const constellationRef = useRef<ConstellationWeb | null>(null);
+  const starContainerRef = useRef<Container | null>(null);
 
   const triggerShockwave = useCallback(
     (x: number, y: number, type: "spawn" | "fuel" | "singularity_takeover" | "click") => {
@@ -53,7 +55,7 @@ export function useGalaxyScene(
         height: BASE_HEIGHT,
         background: 0x07070b,
         antialias: true,
-        resolution: Math.min(window.devicePixelRatio || 1, 2),
+        resolution: typeof window !== "undefined" ? Math.min(window.devicePixelRatio || 1, 2) : 1,
         autoDensity: true,
       })
       .then(() => {
@@ -61,7 +63,13 @@ export function useGalaxyScene(
           app.destroy(true, { children: true });
           return;
         }
-        host.appendChild(app.canvas);
+
+        // Clean out any stale canvas in host
+        while (hostRef.current.firstChild) {
+          hostRef.current.removeChild(hostRef.current.firstChild);
+        }
+
+        hostRef.current.appendChild(app.canvas);
         app.canvas.style.width = "100%";
         app.canvas.style.height = "100%";
         app.canvas.style.display = "block";
@@ -99,6 +107,11 @@ export function useGalaxyScene(
         const shockwaves = new ShockwaveSystem();
         shockwavesRef.current = shockwaves;
         world.addChild(shockwaves.container);
+
+        // Layer 7: Star Sprites Dedicated Display Container
+        const starContainer = new Container();
+        world.addChild(starContainer);
+        starContainerRef.current = starContainer;
 
         const tierColors = new Map<string, { color: number; alpha: number }>();
         const starNodes: Array<{ id: string; x: number; y: number; rank: number; isHovered: boolean }> =
@@ -163,10 +176,13 @@ export function useGalaxyScene(
         app.canvas.addEventListener("pointerdown", onDown);
         window.addEventListener("pointermove", onMove);
         window.addEventListener("pointerup", onUp);
+
+        setIsReady(true);
       });
 
     return () => {
       mounted = false;
+      setIsReady(false);
       if (onMove) window.removeEventListener("pointermove", onMove);
       if (onUp) window.removeEventListener("pointerup", onUp);
       sprites?.forEach((s) => s.destroy());
@@ -174,6 +190,7 @@ export function useGalaxyScene(
       trailsRef.current?.destroy();
       shockwavesRef.current?.destroy();
       constellationRef.current?.destroy();
+      starContainerRef.current = null;
       app.destroy(true, { children: true });
       appRef.current = null;
     };
@@ -203,5 +220,5 @@ export function useGalaxyScene(
     });
   }, [spritesRef, filterTier, searchQuery]);
 
-  return { appRef, currentZoom, triggerShockwave };
+  return { appRef, currentZoom, triggerShockwave, isReady, starContainerRef };
 }

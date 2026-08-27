@@ -145,7 +145,6 @@ export class StarSprite {
     });
 
     if (this.label) this.label.alpha = alphaMultiplier;
-    if (isTop || isPhoton || this.isHovered) this.graphic.blendMode = "add";
   }
 
   public tick(delta: number, cx: number, cy: number): { x: number; y: number } {

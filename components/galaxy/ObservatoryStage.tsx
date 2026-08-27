@@ -87,9 +87,9 @@ export function ObservatoryStage({ initialStars = [] }: { initialStars?: Star[] 
         onOpenPalette={() => setPaletteOpen(true)}
       />
 
-      <div className="relative flex-1 bg-[#07070b]">
+      <div className="relative flex-1 min-h-[550px] sm:min-h-[640px] lg:min-h-[720px] bg-[#07070b]">
         {view === "galaxy" ? (
-          <div className="h-full w-full">
+          <div className="h-full w-full min-h-[550px] sm:min-h-[640px] lg:min-h-[720px]">
             <GalaxyCanvas stars={currentStars} filterTier={filterTier} searchQuery={searchQuery} onSelectStar={(star, rank) => setSelectedStar({ star, rank })} />
           </div>
         ) : (

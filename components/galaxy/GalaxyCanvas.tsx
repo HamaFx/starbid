@@ -42,7 +42,7 @@ export function GalaxyCanvas({
     speedRef.current = speed;
   }, [paused, speed]);
 
-  const { appRef, currentZoom, triggerShockwave } = useGalaxyScene(
+  const { appRef, currentZoom, triggerShockwave, isReady, starContainerRef } = useGalaxyScene(
     hostRef,
     spritesRef,
     trailsRef,
@@ -120,9 +120,11 @@ export function GalaxyCanvas({
     }
   }, [recentEvents, triggerShockwave]);
 
+  // Synchronize star sprites with PixiJS display container whenever ready or stars change
   useEffect(() => {
-    const app = appRef.current;
-    if (!app) return;
+    const starContainer = starContainerRef.current;
+    if (!isReady || !starContainer) return;
+
     const maxRadius = Math.min(BASE_WIDTH, BASE_HEIGHT) * 0.44;
     const currentMap = spritesRef.current;
     const activeIds = new Set<string>();
@@ -130,23 +132,29 @@ export function GalaxyCanvas({
     activeSorted.forEach((star, index) => {
       activeIds.add(star.id);
       const existing = currentMap.get(star.id);
-      if (existing) existing.updateData(star, index, maxRadius);
-      else {
+      if (existing) {
+        existing.updateData(star, index, maxRadius);
+        if (existing.container.parent !== starContainer) {
+          starContainer.addChild(existing.container);
+        }
+      } else {
         const sprite = new StarSprite(star, index, maxRadius, handleStarClick, handleStarHover);
         currentMap.set(star.id, sprite);
-        app.stage.children[0]?.addChild(sprite.container);
+        starContainer.addChild(sprite.container);
       }
     });
 
     currentMap.forEach((sprite, id) => {
       if (!activeIds.has(id)) {
-        app.stage.children[0]?.removeChild(sprite.container);
+        if (sprite.container.parent === starContainer) {
+          starContainer.removeChild(sprite.container);
+        }
         sprite.destroy();
         trailsRef.current?.removeStar(id);
         currentMap.delete(id);
       }
     });
-  }, [activeSorted, appRef, handleStarClick, handleStarHover]);
+  }, [isReady, activeSorted, handleStarClick, handleStarHover, starContainerRef]);
 
   return (
     <div className="relative h-full min-h-[550px] w-full overflow-hidden rounded-xl bg-[#07070b] sm:min-h-[640px] lg:min-h-[720px] select-none cursor-grab active:cursor-grabbing">
@@ -154,7 +162,7 @@ export function GalaxyCanvas({
         ref={hostRef}
         aria-label="Interactive celestial accretion disk — use mouse to pan and scroll to zoom"
         role="application"
-        className="h-full w-full"
+        className="h-full w-full min-h-[550px] sm:min-h-[640px] lg:min-h-[720px]"
       />
       <div className="absolute bottom-14 right-2.5 z-20 sm:bottom-2.5">
         <CanvasControls
