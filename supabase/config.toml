@@ -1,0 +1,19 @@
+project_id = "gravity-well"
+
+[api]
+enabled = true
+
+[db]
+port = 54322
+
+[db.pooler]
+enabled = false
+
+[studio]
+enabled = true
+
+[analytics]
+enabled = false
+
+[functions]
+enabled = true

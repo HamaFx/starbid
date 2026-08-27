@@ -1,0 +1,36 @@
+{
+  "name": "supermassive-gravity-well",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "smoke": "node tests/browser-smoke.mjs",
+    "test:local-payment": "node tests/local-payment-flow.mjs",
+    "test:local-phase1": "node tests/local-phase1-flow.mjs"
+  },
+  "dependencies": {
+    "@tailwindcss/postcss": "latest",
+    "@supabase/ssr": "latest",
+    "@supabase/supabase-js": "latest",
+    "next": "latest",
+    "pixi.js": "^8.14.0",
+    "react": "latest",
+    "react-dom": "latest",
+    "zustand": "latest"
+  },
+  "devDependencies": {
+    "@types/node": "latest",
+    "@types/react": "latest",
+    "@types/react-dom": "latest",
+    "autoprefixer": "latest",
+    "postcss": "latest",
+    "tailwindcss": "latest",
+    "typescript": "latest",
+    "vitest": "latest"
+  }
+}
