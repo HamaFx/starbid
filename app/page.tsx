@@ -10,12 +10,12 @@ export const metadata = {
 
 export default function HomePage() {
   return (
-    <main id="main-content" className="min-h-screen bg-[#05050a] p-2 text-[#fff4e0] sm:p-4 md:p-6">
+    <main id="main-content" className="min-h-screen bg-[#05050a] p-1.5 pb-24 text-[#fff4e0] sm:p-4 sm:pb-8 md:p-6">
       {/* Full-Viewport Living Observatory Arena */}
       <ObservatoryStage initialStars={demoStars} />
 
       {/* Secondary Content Below The Fold */}
-      <div className="mx-auto max-w-5xl px-2 py-8">
+      <div className="mx-auto max-w-5xl px-1 py-6 sm:px-2 sm:py-8">
         <HowItWorks />
       </div>
 

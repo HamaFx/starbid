@@ -99,8 +99,8 @@ export function ObservatoryStage({ initialStars = [] }: { initialStars?: Star[] 
         )}
       </div>
 
-      <div className="pointer-events-none absolute bottom-2.5 left-2.5 right-2.5 z-20 flex flex-wrap items-end justify-between gap-2 sm:bottom-3 sm:left-3 sm:right-3">
-        <div className="flex items-center gap-2">
+      <div className="pointer-events-none absolute bottom-14 left-2.5 right-2.5 z-20 flex flex-wrap items-end justify-between gap-2 sm:bottom-3 sm:left-3 sm:right-3">
+        <div className="flex items-center gap-2 max-w-full overflow-hidden">
           <FloatingTicker initialStars={currentStars} />
           <SectorMinimap stars={currentStars} onFocusStar={(s) => setSelectedStar({ star: s, rank: 1 })} />
         </div>

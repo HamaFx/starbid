@@ -156,7 +156,7 @@ export function GalaxyCanvas({
         role="application"
         className="h-full w-full"
       />
-      <div className="absolute bottom-2.5 right-2.5 z-20">
+      <div className="absolute bottom-14 right-2.5 z-20 sm:bottom-2.5">
         <CanvasControls
           paused={paused}
           onTogglePause={() => setPaused(!paused)}

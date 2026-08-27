@@ -25,7 +25,7 @@ export default async function LeaderboardPage() {
   const stars = await loadStars();
 
   return (
-    <main className="min-h-screen bg-[#07070b] p-3 text-[#f3f4f6] sm:p-6">
+    <main className="min-h-screen bg-[#07070b] p-2 pb-24 text-[#f3f4f6] sm:p-6 sm:pb-6">
       <div className="mx-auto max-w-5xl space-y-4">
         {/* Breadcrumb Navigation */}
         <div className="flex items-center justify-between font-mono text-xs text-[#71717a]">
