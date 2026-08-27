@@ -1,56 +1,63 @@
 import { Container, Graphics } from "pixi.js";
 
-type Point = { x: number; y: number };
+const MAX_PTS = 14;
 
 export class OrbitTrails {
   public container: Container;
-  private graphics: Graphics;
-  private histories: Map<string, Point[]> = new Map();
+  private gfx: Graphics;
+  private buffers: Map<string, { x: Float32Array; y: Float32Array; count: number; head: number }> = new Map();
 
   constructor() {
     this.container = new Container();
-    this.graphics = new Graphics();
-    this.container.addChild(this.graphics);
+    this.gfx = new Graphics();
+    this.container.addChild(this.gfx);
   }
 
-  public recordPoint(id: string, x: number, y: number, maxPoints = 16) {
-    let list = this.histories.get(id);
-    if (!list) {
-      list = [];
-      this.histories.set(id, list);
+  public recordPoint(id: string, px: number, py: number) {
+    let buf = this.buffers.get(id);
+    if (!buf) {
+      buf = { x: new Float32Array(MAX_PTS), y: new Float32Array(MAX_PTS), count: 0, head: 0 };
+      this.buffers.set(id, buf);
     }
-    list.unshift({ x, y });
-    if (list.length > maxPoints) list.pop();
+    buf.x[buf.head] = px;
+    buf.y[buf.head] = py;
+    buf.head = (buf.head + 1) % MAX_PTS;
+    if (buf.count < MAX_PTS) buf.count++;
   }
 
   public removeStar(id: string) {
-    this.histories.delete(id);
+    this.buffers.delete(id);
   }
 
   public renderTrails(tierColors: Map<string, { color: number; alpha: number }>) {
-    this.graphics.clear();
+    this.gfx.clear();
 
-    this.histories.forEach((points, id) => {
-      if (points.length < 2) return;
+    this.buffers.forEach((buf, id) => {
+      if (buf.count < 2) return;
       const meta = tierColors.get(id) ?? { color: 0x71717a, alpha: 0.15 };
 
-      for (let i = 0; i < points.length - 1; i++) {
-        const p1 = points[i];
-        const p2 = points[i + 1];
-        const progress = 1 - i / points.length;
-        const segmentAlpha = meta.alpha * Math.pow(progress, 1.8);
+      for (let i = 0; i < buf.count - 1; i++) {
+        const idx1 = (buf.head - 1 - i + MAX_PTS) % MAX_PTS;
+        const idx2 = (buf.head - 2 - i + MAX_PTS) % MAX_PTS;
+        const p1x = buf.x[idx1];
+        const p1y = buf.y[idx1];
+        const p2x = buf.x[idx2];
+        const p2y = buf.y[idx2];
 
-        this.graphics.moveTo(p1.x, p1.y).lineTo(p2.x, p2.y).stroke({
+        const progress = 1 - i / buf.count;
+        const alpha = meta.alpha * Math.pow(progress, 1.6);
+
+        this.gfx.moveTo(p1x, p1y).lineTo(p2x, p2y).stroke({
           color: meta.color,
-          alpha: segmentAlpha,
-          width: Math.max(0.6, progress * 2),
+          alpha,
+          width: Math.max(0.5, progress * 1.8),
         });
       }
     });
   }
 
   public destroy() {
-    this.histories.clear();
+    this.buffers.clear();
     this.container.destroy({ children: true });
   }
 }

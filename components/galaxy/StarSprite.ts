@@ -1,4 +1,4 @@
-import { Container, Graphics } from "pixi.js";
+import { Container, Graphics, Text } from "pixi.js";
 import { radius, size, angularVelocity } from "@/lib/math/orbit";
 import type { Star } from "@/lib/types";
 
@@ -11,8 +11,8 @@ export class StarSprite {
   public starSize: number;
   public rank: number;
   private graphic: Graphics;
+  private label: Text | null = null;
   private isHovered = false;
-  private pulsePhase = Math.random() * Math.PI * 2;
 
   constructor(
     star: Star,
@@ -47,6 +47,23 @@ export class StarSprite {
 
     this.graphic = new Graphics();
     this.container.addChild(this.graphic);
+
+    // Subtle Monospace Name Tag for Top Stars
+    if (this.rank < 5) {
+      this.label = new Text({
+        text: this.star.name.length > 12 ? `${this.star.name.slice(0, 11)}…` : this.star.name,
+        style: {
+          fontFamily: "monospace",
+          fontSize: 9,
+          fill: this.rank === 0 ? 0x38bdf8 : 0x71717a,
+          letterSpacing: 0.5,
+        },
+      });
+      this.label.anchor.set(0.5, 0);
+      this.label.position.set(0, this.starSize + 4);
+      this.container.addChild(this.label);
+    }
+
     this.redraw();
   }
 
@@ -56,6 +73,7 @@ export class StarSprite {
     const totalDollars = star.totalBidCents / 100;
     this.targetRadius = radius(totalDollars, maxRadius);
     this.starSize = size(totalDollars) / 3;
+    if (this.label) this.label.style.fill = this.rank === 0 ? 0x38bdf8 : 0x71717a;
     this.redraw();
   }
 
@@ -68,14 +86,14 @@ export class StarSprite {
     const color = isTop ? 0xfff4e0 : isPhoton ? 0xfbbf24 : isInner ? 0xf97316 : 0x71717a;
     const baseSize = this.isHovered ? this.starSize * 1.4 : this.starSize;
 
-    // Diffraction Spikes for Core and Photon Ring
+    // Diffraction Spikes
     if (isTop || isPhoton) {
       const spikeLen = baseSize * (isTop ? 2.4 : 1.8);
       this.graphic.moveTo(-spikeLen, 0).lineTo(spikeLen, 0).stroke({ color: 0xffffff, alpha: 0.3, width: 1 });
       this.graphic.moveTo(0, -spikeLen).lineTo(0, spikeLen).stroke({ color: 0xffffff, alpha: 0.3, width: 1 });
     }
 
-    // Outer Aura Corona
+    // Outer Corona Rings
     if (isTop) {
       this.graphic.circle(0, 0, baseSize + 6).stroke({ color: 0x38bdf8, alpha: 0.4, width: 1.5 });
       this.graphic.circle(0, 0, baseSize + 3).stroke({ color: 0xfbbf24, alpha: 0.6, width: 1 });
@@ -89,9 +107,7 @@ export class StarSprite {
       alpha: this.star.isDemo ? 0.7 : 1,
     });
 
-    if (isTop || isPhoton || this.isHovered) {
-      this.graphic.blendMode = "add";
-    }
+    if (isTop || isPhoton || this.isHovered) this.graphic.blendMode = "add";
   }
 
   public tick(delta: number, cx: number, cy: number): { x: number; y: number } {
@@ -100,7 +116,6 @@ export class StarSprite {
 
     const speed = angularVelocity(Math.max(10, this.currentRadius), 25);
     this.currentAngle += speed * 0.0006 * delta;
-    this.pulsePhase += 0.03 * delta;
 
     const x = cx + Math.cos(this.currentAngle) * this.currentRadius;
     const y = cy + Math.sin(this.currentAngle) * this.currentRadius * 0.62;
