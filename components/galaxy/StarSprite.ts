@@ -28,10 +28,10 @@ export class StarSprite {
     this.container.cursor = "pointer";
 
     this.container.on("pointertap", () => onClick(this.star));
-    this.container.on("pointerover", (event) => {
+    this.container.on("pointerover", (e) => {
       this.isHovered = true;
       this.redraw();
-      onHover(this.star, event.global.x, event.global.y);
+      onHover(this.star, e.global.x, e.global.y);
     });
     this.container.on("pointerout", () => {
       this.isHovered = false;
@@ -65,23 +65,28 @@ export class StarSprite {
     const isPhoton = this.rank > 0 && this.rank < 3;
     const isInner = this.rank >= 3 && this.rank < 8;
 
-    const color = isTop ? 0xfff4e0 : isPhoton ? 0xffb627 : isInner ? 0xff6b35 : 0x7a2e1d;
-    const baseSize = this.isHovered ? this.starSize * 1.35 : this.starSize;
+    const color = isTop ? 0xfff4e0 : isPhoton ? 0xfbbf24 : isInner ? 0xf97316 : 0x71717a;
+    const baseSize = this.isHovered ? this.starSize * 1.4 : this.starSize;
 
-    // Outer Aura / Corona for Milestone Tiers
-    if (isTop) {
-      this.graphic.circle(0, 0, baseSize + 8).stroke({ color: 0xfff4e0, alpha: 0.35, width: 2 });
-      this.graphic.circle(0, 0, baseSize + 4).stroke({ color: 0xffb627, alpha: 0.5, width: 1.5 });
-    } else if (isPhoton || this.isHovered) {
-      this.graphic.circle(0, 0, baseSize + 5).stroke({ color: isPhoton ? 0xffb627 : 0x4cc9f0, alpha: 0.4, width: 1.5 });
-    } else if (isInner) {
-      this.graphic.circle(0, 0, baseSize + 3).stroke({ color: 0xff6b35, alpha: 0.25, width: 1 });
+    // Diffraction Spikes for Core and Photon Ring
+    if (isTop || isPhoton) {
+      const spikeLen = baseSize * (isTop ? 2.4 : 1.8);
+      this.graphic.moveTo(-spikeLen, 0).lineTo(spikeLen, 0).stroke({ color: 0xffffff, alpha: 0.3, width: 1 });
+      this.graphic.moveTo(0, -spikeLen).lineTo(0, spikeLen).stroke({ color: 0xffffff, alpha: 0.3, width: 1 });
     }
 
-    // Core Star Sphere
+    // Outer Aura Corona
+    if (isTop) {
+      this.graphic.circle(0, 0, baseSize + 6).stroke({ color: 0x38bdf8, alpha: 0.4, width: 1.5 });
+      this.graphic.circle(0, 0, baseSize + 3).stroke({ color: 0xfbbf24, alpha: 0.6, width: 1 });
+    } else if (isPhoton || this.isHovered) {
+      this.graphic.circle(0, 0, baseSize + 4).stroke({ color: isPhoton ? 0xfbbf24 : 0x38bdf8, alpha: 0.4, width: 1 });
+    }
+
+    // Core Star Body
     this.graphic.circle(0, 0, baseSize).fill({
-      color: this.star.verified ? 0xfff4e0 : color,
-      alpha: this.star.isDemo ? 0.6 : 1,
+      color: this.star.verified ? 0xffffff : color,
+      alpha: this.star.isDemo ? 0.7 : 1,
     });
 
     if (isTop || isPhoton || this.isHovered) {
@@ -89,7 +94,7 @@ export class StarSprite {
     }
   }
 
-  public tick(delta: number, cx: number, cy: number) {
+  public tick(delta: number, cx: number, cy: number): { x: number; y: number } {
     const ease = 0.04 * Math.min(delta, 2);
     this.currentRadius += (this.targetRadius - this.currentRadius) * ease;
 
@@ -100,6 +105,8 @@ export class StarSprite {
     const x = cx + Math.cos(this.currentAngle) * this.currentRadius;
     const y = cy + Math.sin(this.currentAngle) * this.currentRadius * 0.62;
     this.container.position.set(x, y);
+
+    return { x, y };
   }
 
   public destroy() {
