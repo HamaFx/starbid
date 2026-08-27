@@ -78,6 +78,18 @@ export function LiveStarDetails({ star, stars = [star] }: { star: Star; stars?: 
         </a>
       </div>
 
+      {/* Dynamic SVG Badge Preview */}
+      <div className="mt-5 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-white/5 bg-[#05050a] p-3.5">
+        <div>
+          <span className="font-mono text-[10px] uppercase text-[#8f8c96]">Dynamic Live Badge</span>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={`/api/badge/${encodeURIComponent(star.id)}`} alt={`${star.name} badge`} className="mt-1.5 h-6" />
+        </div>
+        <a href={`/api/badge/${encodeURIComponent(star.id)}`} target="_blank" rel="noopener noreferrer" className="font-mono text-xs text-[#4cc9f0] hover:underline">
+          View SVG ↗
+        </a>
+      </div>
+
       {/* Interactive Rank Calculator */}
       <CostToRank star={star} stars={stars} />
 

@@ -12,6 +12,7 @@ export class StarSprite {
   public rank: number;
   private graphic: Graphics;
   private isHovered = false;
+  private pulsePhase = Math.random() * Math.PI * 2;
 
   constructor(
     star: Star,
@@ -61,29 +62,29 @@ export class StarSprite {
   public redraw() {
     this.graphic.clear();
     const isTop = this.rank === 0;
-    const color = isTop
-      ? 0xfff4e0
-      : this.rank < 5
-      ? 0xffb627
-      : this.rank < 20
-      ? 0xff6b35
-      : 0x7a2e1d;
+    const isPhoton = this.rank > 0 && this.rank < 3;
+    const isInner = this.rank >= 3 && this.rank < 8;
 
-    const baseSize = this.isHovered ? this.starSize * 1.3 : this.starSize;
+    const color = isTop ? 0xfff4e0 : isPhoton ? 0xffb627 : isInner ? 0xff6b35 : 0x7a2e1d;
+    const baseSize = this.isHovered ? this.starSize * 1.35 : this.starSize;
 
-    // Outer glow ring for Singularity / top stars or hover
-    if (isTop || this.isHovered) {
-      this.graphic.circle(0, 0, baseSize + (isTop ? 6 : 4));
-      this.graphic.stroke({ color: 0xfff4e0, alpha: 0.45, width: 2 });
+    // Outer Aura / Corona for Milestone Tiers
+    if (isTop) {
+      this.graphic.circle(0, 0, baseSize + 8).stroke({ color: 0xfff4e0, alpha: 0.35, width: 2 });
+      this.graphic.circle(0, 0, baseSize + 4).stroke({ color: 0xffb627, alpha: 0.5, width: 1.5 });
+    } else if (isPhoton || this.isHovered) {
+      this.graphic.circle(0, 0, baseSize + 5).stroke({ color: isPhoton ? 0xffb627 : 0x4cc9f0, alpha: 0.4, width: 1.5 });
+    } else if (isInner) {
+      this.graphic.circle(0, 0, baseSize + 3).stroke({ color: 0xff6b35, alpha: 0.25, width: 1 });
     }
 
-    this.graphic.circle(0, 0, baseSize);
-    this.graphic.fill({
+    // Core Star Sphere
+    this.graphic.circle(0, 0, baseSize).fill({
       color: this.star.verified ? 0xfff4e0 : color,
-      alpha: this.star.isDemo ? 0.5 : 1,
+      alpha: this.star.isDemo ? 0.6 : 1,
     });
 
-    if (isTop || this.rank < 5 || this.isHovered) {
+    if (isTop || isPhoton || this.isHovered) {
       this.graphic.blendMode = "add";
     }
   }
@@ -94,6 +95,7 @@ export class StarSprite {
 
     const speed = angularVelocity(Math.max(10, this.currentRadius), 25);
     this.currentAngle += speed * 0.0006 * delta;
+    this.pulsePhase += 0.03 * delta;
 
     const x = cx + Math.cos(this.currentAngle) * this.currentRadius;
     const y = cy + Math.sin(this.currentAngle) * this.currentRadius * 0.62;
