@@ -2,27 +2,14 @@
 
 import { useEffect, useRef, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
-import { Application, Container, Graphics } from "pixi.js";
+import { Application, Container } from "pixi.js";
 import { StarSprite } from "@/components/galaxy/StarSprite";
+import { drawAccretionGuides, drawSingularityCore } from "@/components/galaxy/CanvasBackground";
 import { CanvasControls } from "@/components/galaxy/CanvasControls";
 import type { Star } from "@/lib/types";
 
-const BASE_WIDTH = 900;
-const BASE_HEIGHT = 620;
-
-function drawCore(cx: number, cy: number): Container {
-  const container = new Container();
-  const glow = new Graphics();
-  glow.circle(cx, cy, 45).fill({ color: 0xff6b35, alpha: 0.12 });
-  glow.circle(cx, cy, 34).stroke({ color: 0xffb627, alpha: 0.35, width: 2 });
-  container.addChild(glow);
-
-  const core = new Graphics();
-  core.circle(cx, cy, 24).fill(0x020205);
-  core.circle(cx, cy, 26).stroke({ color: 0xfff4e0, alpha: 0.6, width: 2 });
-  container.addChild(core);
-  return container;
-}
+const BASE_WIDTH = 1200;
+const BASE_HEIGHT = 760;
 
 export function GalaxyCanvas({ stars, onSelectStar }: { stars: Star[]; onSelectStar?: (star: Star, rank: number) => void }) {
   const router = useRouter();
@@ -75,18 +62,21 @@ export function GalaxyCanvas({ stars, onSelectStar }: { stars: Star[]; onSelectS
       if (!mounted || !hostRef.current) { app.destroy(true, { children: true }); return; }
       host.appendChild(app.canvas);
       app.canvas.style.width = "100%";
-      app.canvas.style.height = "auto";
+      app.canvas.style.height = "100%";
       app.canvas.style.display = "block";
 
-      app.stage.addChild(drawCore(BASE_WIDTH / 2, BASE_HEIGHT / 2));
+      const cx = BASE_WIDTH / 2;
+      const cy = BASE_HEIGHT / 2;
+      const maxRadius = Math.min(BASE_WIDTH, BASE_HEIGHT) * 0.44;
+
+      app.stage.addChild(drawAccretionGuides(cx, cy, maxRadius));
+      app.stage.addChild(drawSingularityCore(cx, cy));
       const starsLayer = new Container();
       starsLayerRef.current = starsLayer;
       app.stage.addChild(starsLayer);
 
       app.ticker.add((ticker) => {
         if (pausedRef.current) return;
-        const cx = BASE_WIDTH / 2;
-        const cy = BASE_HEIGHT / 2;
         const delta = ticker.deltaTime * speedRef.current;
         sprites.forEach((sprite) => sprite.tick(delta, cx, cy));
       });
@@ -131,19 +121,19 @@ export function GalaxyCanvas({ stars, onSelectStar }: { stars: Star[]; onSelectS
   }, [stars, handleStarClick, handleStarHover]);
 
   return (
-    <div className="relative w-full overflow-hidden rounded-xl">
-      <div ref={hostRef} aria-label="Interactive gravity well galaxy canvas" role="img" />
+    <div className="relative h-full min-h-[550px] w-full overflow-hidden rounded-2xl bg-[#05050a] sm:min-h-[640px] lg:min-h-[720px]">
+      <div ref={hostRef} aria-label="Living visual accretion disk canvas" role="img" className="h-full w-full" />
       <div className="absolute bottom-3 right-3 z-20">
         <CanvasControls paused={paused} onTogglePause={() => setPaused(!paused)} speed={speed} onChangeSpeed={setSpeed} />
       </div>
       {hovered && (
         <aside
-          className="pointer-events-none absolute z-20 -translate-x-1/2 -translate-y-full rounded-xl border border-white/20 bg-[#0a0a14]/90 px-3 py-2 text-xs backdrop-blur-sm shadow-xl"
+          className="pointer-events-none absolute z-20 -translate-x-1/2 -translate-y-full rounded-xl border border-white/20 bg-[#0a0a14]/90 px-3 py-2 text-xs backdrop-blur-md shadow-2xl"
           style={{ left: `${(hovered.x / BASE_WIDTH) * 100}%`, top: `${(hovered.y / BASE_HEIGHT) * 100}%` }}
         >
           <p className="font-semibold text-[#fff4e0]">{hovered.star.name}</p>
           <p className="font-mono text-[#ffb627]">#{hovered.rank} · ${(hovered.star.totalBidCents / 100).toFixed(2)}</p>
-          <p className="font-mono text-[10px] text-[#4cc9f0]">Click to preview</p>
+          <p className="font-mono text-[10px] text-[#4cc9f0]">Tap / click to inspect</p>
         </aside>
       )}
     </div>
