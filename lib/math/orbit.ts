@@ -7,7 +7,11 @@ export function radius(totalBidDollars: number, rMax: number): number {
     throw new Error("Orbit inputs must be non-negative");
   }
 
-  return rMax / (1 + Math.log1p(totalBidDollars));
+  // Logarithmic radial distribution giving every orbital tier ample breathing room
+  const minRadius = rMax * 0.16;
+  const maxSpan = rMax * 0.76;
+  const decay = 1 / (1 + 0.38 * Math.log1p(totalBidDollars));
+  return minRadius + maxSpan * decay;
 }
 
 export function size(totalBidDollars: number): number {
