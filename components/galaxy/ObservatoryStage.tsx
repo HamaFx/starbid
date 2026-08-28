@@ -15,6 +15,7 @@ import { listPublicStars } from "@/lib/db/stars";
 import { subscribeToGalaxy } from "@/lib/db/realtimeSync";
 import type { Star } from "@/lib/types";
 import { rankActiveStars } from "@/lib/math/galaxyLayout";
+import type { GalaxySceneController } from "@/components/galaxy/GalaxySceneController";
 
 export function ObservatoryStage({ initialStars = [] }: { initialStars?: Star[] }) {
   const stars = useGalaxyStore((state) => state.stars);
@@ -26,10 +27,7 @@ export function ObservatoryStage({ initialStars = [] }: { initialStars?: Star[] 
   const [leaderboardOpen, setLeaderboardOpen] = useState(false);
   const [paletteOpen, setPaletteOpen] = useState(false);
   const [selectedStar, setSelectedStar] = useState<{ star: Star; rank: number } | null>(null);
-  const cameraActionsRef = useRef<{
-    resetCamera: () => void;
-    focusCameraOn: (starId: string, zoom?: number) => void;
-  } | null>(null);
+  const cameraActionsRef = useRef<GalaxySceneController | null>(null);
 
   const initialStarsRef = useRef(initialStars);
 
@@ -55,17 +53,23 @@ export function ObservatoryStage({ initialStars = [] }: { initialStars?: Star[] 
     });
   }, [activeList]);
 
+  const keyboardStateRef = useRef({ paletteOpen, leaderboardOpen, selectedStar, cycleStar });
+  useEffect(() => {
+    keyboardStateRef.current = { paletteOpen, leaderboardOpen, selectedStar, cycleStar };
+  }, [cycleStar, leaderboardOpen, paletteOpen, selectedStar]);
+
   useEffect(() => {
     const handleKey = (e: KeyboardEvent) => {
+      const state = keyboardStateRef.current;
       if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") { e.preventDefault(); setPaletteOpen((prev) => !prev); }
-      if (paletteOpen || leaderboardOpen || selectedStar) return;
+      if (state.paletteOpen || state.leaderboardOpen || state.selectedStar) return;
       if (document.activeElement?.tagName === "INPUT" || document.activeElement?.tagName === "TEXTAREA") return;
-      if (e.key === "j" || e.key === "ArrowDown") { e.preventDefault(); cycleStar(1); }
-      if (e.key === "k" || e.key === "ArrowUp") { e.preventDefault(); cycleStar(-1); }
+      if (e.key === "j" || e.key === "ArrowDown") { e.preventDefault(); state.cycleStar(1); }
+      if (e.key === "k" || e.key === "ArrowUp") { e.preventDefault(); state.cycleStar(-1); }
     };
     window.addEventListener("keydown", handleKey);
     return () => window.removeEventListener("keydown", handleKey);
-  }, [cycleStar, paletteOpen, leaderboardOpen, selectedStar]);
+  }, []);
 
   return (
     <div className="terminal-window relative flex h-[calc(100dvh-1.5rem)] sm:h-[calc(100dvh-3rem)] max-h-[920px] min-h-[480px] w-full flex-col overflow-hidden rounded-xl border border-white/[0.08] shadow-2xl">
@@ -97,9 +101,7 @@ export function ObservatoryStage({ initialStars = [] }: { initialStars?: Star[] 
               filterTier={filterTier}
               searchQuery={searchQuery}
               onSelectStar={(star, rank) => setSelectedStar({ star, rank })}
-              onSceneReady={(actions) => {
-                cameraActionsRef.current = actions;
-              }}
+              controllerRef={cameraActionsRef}
             />
           </div>
         ) : (
