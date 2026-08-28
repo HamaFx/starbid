@@ -51,8 +51,9 @@ export class GalaxyViewport {
     this.scale = defaultScale;
     this.targetScale = defaultScale;
 
-    // Set pivot to the Singularity Core
-    this.world.pivot.set(cx, cy);
+    // The world is authored in world coordinates; its pivot is the world
+    // center while cx/cy are the screen-space canvas center.
+    this.world.pivot.set(6000, 3250);
     this.world.position.set(cx, cy);
     this.world.scale.set(defaultScale);
   }
