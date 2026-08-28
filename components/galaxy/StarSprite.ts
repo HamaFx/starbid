@@ -150,6 +150,15 @@ export class StarSprite {
       this.graphic.circle(0, 0, baseSize + 6).stroke({ color: 0xffffff, alpha: 0.6, width: 1.0 });
     }
 
+    // Rank-specific silhouettes make the top ten visually distinct.
+    if (this.rank === 1 && !this.isDimmed) {
+      this.graphic.star(0, 0, 8, baseSize + 8, baseSize + 3, -Math.PI / 2).fill({ color: 0xfbbf24, alpha: 0.85 });
+    } else if (this.rank === 2 && !this.isDimmed) {
+      this.graphic.star(0, 0, 6, baseSize + 7, baseSize + 3, -Math.PI / 2).fill({ color: 0x38bdf8, alpha: 0.8 });
+    } else if (this.rank >= 3 && this.rank <= 10 && !this.isDimmed) {
+      this.graphic.circle(0, 0, baseSize + 7).stroke({ color, alpha: 0.55, width: 2 });
+    }
+
     // Diffraction Spikes for top stars
     if ((isTop || isElite || this.isHovered) && !this.isDimmed) {
       const spikeLen = baseSize * (isTop ? 2.5 : this.rank <= 3 ? 2 : 1.45);

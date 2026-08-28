@@ -157,8 +157,8 @@ export const rankOrbitRadius = galaxyRadiusForStar;
 
 export function starSizeForRank(rank: number, starCount: number, bidCents: number): number {
   const crowd = crowdScale(starCount);
-  const bidInfluence = Math.min(2, Math.max(0, Math.log1p(Math.max(0, bidCents) / 100) * 0.16));
-  const tier = rank === 0 ? 18 : rank <= 3 ? 12 : rank <= 6 ? 9 : rank <= 10 ? 7 : 5;
+  const bidInfluence = Math.min(5, Math.max(0, Math.log1p(Math.max(0, bidCents) / 100) * 0.35));
+  const tier = rank === 0 ? 42 : rank === 1 ? 32 : rank === 2 ? 28 : rank <= 3 ? 25 : rank <= 6 ? 21 : rank <= 10 ? 17 : 9;
   return (tier + bidInfluence) * crowd;
 }
 

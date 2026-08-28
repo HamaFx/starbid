@@ -77,7 +77,8 @@ describe("galaxy layout", () => {
     expect(galaxyRadiusForStar({ id: "rank-two" }, 1, 20, 300)).toBeGreaterThan(300 * 0.14);
   });
 
-  it("gives the top ten distinct visual size tiers", () => {
+  it("gives the singularity and top ten strong visual size hierarchy", () => {
+    expect(starSizeForRank(0, 20, 100)).toBeGreaterThan(starSizeForRank(1, 20, 100));
     expect(starSizeForRank(1, 20, 100)).toBeGreaterThan(starSizeForRank(4, 20, 100));
     expect(starSizeForRank(4, 20, 100)).toBeGreaterThan(starSizeForRank(8, 20, 100));
     expect(starSizeForRank(8, 20, 100)).toBeGreaterThan(starSizeForRank(11, 20, 100));
