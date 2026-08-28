@@ -5,6 +5,7 @@ import {
   crowdScale,
   orbitPoint,
   orbitRadiusForStar,
+  spiralAngleForStar,
   rankActiveStars,
 } from "@/lib/math/galaxyLayout";
 import type { Star } from "@/lib/types";
@@ -30,8 +31,8 @@ function star(id: string, bid: number, enteredAt: string, status: Star["status"]
 describe("galaxy layout", () => {
   it("fits the projected ellipse inside narrow and tall viewports", () => {
     const layout = calculateGalaxyLayout(400, 700);
-    expect(layout.maxRadius).toBeLessThanOrEqual(400 * 0.49);
-    expect(layout.maxRadius * layout.yScale).toBeLessThanOrEqual(700 * 0.49);
+    expect(layout.maxRadius).toBeLessThanOrEqual(400 * 0.52);
+    expect(layout.maxRadius * layout.yScale).toBeLessThanOrEqual(700 * 0.52);
   });
 
   it("projects the center and cardinal points consistently", () => {
@@ -49,7 +50,17 @@ describe("galaxy layout", () => {
     }));
     const radii = population.map((item) => orbitRadiusForStar(item, population, 300));
     expect(new Set(radii).size).toBeGreaterThan(2);
-    expect(radii.every((value) => value >= 300 * 0.12 && value <= 300 * 0.96)).toBe(true);
+    expect(radii.every((value) => value >= 300 * 0.16 && value <= 300 * 0.99)).toBe(true);
+  });
+
+  it("places the same star deterministically on a spiral arm", () => {
+    const input = { id: "star-a", angleSeed: 20 };
+    expect(spiralAngleForStar(input, 2, 150, 300)).toBe(
+      spiralAngleForStar(input, 2, 150, 300),
+    );
+    expect(spiralAngleForStar(input, 2, 150, 300)).not.toBe(
+      spiralAngleForStar(input, 3, 150, 300),
+    );
   });
 
   it("scales stars down only when the scene becomes crowded", () => {

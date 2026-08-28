@@ -2,7 +2,6 @@ import "pixi.js/unsafe-eval";
 import { useEffect, useRef, useState, useCallback } from "react";
 import { Application, Container } from "pixi.js";
 import { drawAccretionGuides, drawSingularityCore } from "@/components/galaxy/CanvasBackground";
-import { AmbientDust } from "@/components/galaxy/AmbientDust";
 import { OrbitTrails } from "@/components/galaxy/OrbitTrails";
 import { GalaxyViewport } from "@/components/galaxy/GalaxyViewport";
 import { ShockwaveSystem } from "@/components/galaxy/ShockwaveSystem";
@@ -94,11 +93,7 @@ export function useGalaxyScene(
         guidesContainer.addChild(drawAccretionGuides(cx, cy, maxRadius));
         world.addChild(guidesContainer);
 
-        // Layer 2: Ambient Relativistic Accretion Gas Particles
-        const dust = new AmbientDust(220, maxRadius);
-        world.addChild(dust.container);
-
-        // Layer 3: Gravitational Constellation Filaments
+        // Layer 2: Gravitational Constellation Filaments
         const constellation = new ConstellationWeb();
         constellationRef.current = constellation;
         world.addChild(constellation.container);
@@ -142,7 +137,6 @@ export function useGalaxyScene(
           }
           if (pausedRef.current) return;
 
-          if (lod === "full") dust.tick(animationDelta, cx, cy, maxRadius);
           lensing.tick(animationDelta, cx, cy);
           shockwaves.tick(animationDelta);
 

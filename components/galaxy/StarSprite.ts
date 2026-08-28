@@ -1,6 +1,6 @@
 import { Container, Graphics, Text } from "pixi.js";
 import { angularVelocity } from "@/lib/math/orbit";
-import { orbitPoint, GALAXY_Y_SCALE, orbitRadiusForStar, crowdScale } from "@/lib/math/galaxyLayout";
+import { orbitPoint, GALAXY_Y_SCALE, orbitRadiusForStar, crowdScale, spiralAngleForStar } from "@/lib/math/galaxyLayout";
 import type { Star } from "@/lib/types";
 
 export class StarSprite {
@@ -53,7 +53,7 @@ export class StarSprite {
 
     this.targetRadius = orbitRadiusForStar(star, population, maxRadius);
     this.currentRadius = this.targetRadius;
-    this.currentAngle = (star.angleSeed * Math.PI) / 180;
+    this.currentAngle = spiralAngleForStar(star, rank, this.currentRadius, maxRadius);
     this.starSize = this.calculateStarSize();
 
     this.graphic = new Graphics();

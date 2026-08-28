@@ -1,11 +1,12 @@
 import type { Star } from "@/lib/types";
 
 export const GALAXY_Y_SCALE = 0.62;
-export const GALAXY_HORIZONTAL_MARGIN = 0.49;
-export const GALAXY_VERTICAL_MARGIN = 0.49;
-export const GALAXY_MIN_ORBIT_RATIO = 0.12;
-export const GALAXY_MAX_ORBIT_RATIO = 0.96;
-export const GALAXY_ORBIT_BANDS = 4;
+export const GALAXY_HORIZONTAL_MARGIN = 0.52;
+export const GALAXY_VERTICAL_MARGIN = 0.52;
+export const GALAXY_MIN_ORBIT_RATIO = 0.16;
+export const GALAXY_MAX_ORBIT_RATIO = 0.99;
+export const GALAXY_SPIRAL_ARMS = 4;
+export const GALAXY_SPIRAL_TWIST = 1.9;
 
 export type GalaxyLayout = {
   width: number;
@@ -86,17 +87,32 @@ export function orbitRadiusForStar(
   const minBid = Math.min(...values, 0);
   const maxBid = Math.max(...values, 0);
   const normalized = normalizedBid(star.totalBidCents / 100, minBid, maxBid);
-  const band = Math.min(
-    GALAXY_ORBIT_BANDS - 1,
-    Math.floor(normalized * GALAXY_ORBIT_BANDS),
-  );
-  const bandCenter = (band + 0.5) / GALAXY_ORBIT_BANDS;
-  const bandSpread = 0.22 / GALAXY_ORBIT_BANDS;
-  const bandOffset = ((normalized * 997) % 1 - 0.5) * bandSpread;
-  const radialPosition = Math.min(1, Math.max(0, bandCenter + bandOffset));
   const inner = maxRadius * GALAXY_MIN_ORBIT_RATIO;
   const outer = maxRadius * GALAXY_MAX_ORBIT_RATIO;
-  return outer - radialPosition * (outer - inner);
+  return outer - normalized * (outer - inner);
+}
+
+export function spiralAngleForStar(
+  star: Pick<Star, "id" | "angleSeed">,
+  rank: number,
+  radius: number,
+  maxRadius: number,
+): number {
+  const seed = ((star.angleSeed * 0.017453292519943295) + hashToUnit(star.id) * Math.PI * 2);
+  const radial = Math.min(1, Math.max(0, radius / Math.max(1, maxRadius)));
+  const arm = ((rank % GALAXY_SPIRAL_ARMS) / GALAXY_SPIRAL_ARMS) * Math.PI * 2;
+  const armAngle = arm + radial * GALAXY_SPIRAL_TWIST;
+  const jitter = (hashToUnit(`${star.id}:jitter`) - 0.5) * (0.34 - radial * 0.12);
+  return armAngle + seed * 0.18 + jitter;
+}
+
+function hashToUnit(value: string): number {
+  let hash = 2166136261;
+  for (let index = 0; index < value.length; index += 1) {
+    hash ^= value.charCodeAt(index);
+    hash = Math.imul(hash, 16777619);
+  }
+  return (hash >>> 0) / 4294967295;
 }
 
 export function crowdScale(starCount: number): number {
