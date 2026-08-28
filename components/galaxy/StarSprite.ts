@@ -11,7 +11,7 @@ export class StarSprite {
   public starSize: number;
   public rank: number;
   private graphic: Graphics;
-  private label: Text | null = null;
+  private label: Text;
   public isHovered = false;
   public isDimmed = false;
   public isFocused = false;
@@ -47,26 +47,34 @@ export class StarSprite {
     this.targetRadius = radius(totalDollars, maxRadius);
     this.currentRadius = this.targetRadius;
     this.currentAngle = (star.angleSeed * Math.PI) / 180;
-    this.starSize = size(totalDollars) / 3;
+    this.starSize = Math.max(5.5, size(totalDollars) / 3);
 
     this.graphic = new Graphics();
     this.container.addChild(this.graphic);
 
-    if (this.rank < 8) {
-      this.label = new Text({
-        text: this.star.name.length > 12 ? `${this.star.name.slice(0, 11)}…` : this.star.name,
-        style: {
-          fontFamily: "monospace",
-          fontSize: 9,
-          fill: this.rank === 0 ? 0x38bdf8 : this.rank < 3 ? 0xfbbf24 : 0x71717a,
-        },
-      });
-      this.label.anchor.set(0.5, 0);
-      this.label.position.set(0, this.starSize + 4);
-      this.container.addChild(this.label);
-    }
+    // Dynamic Monospace Label for every star
+    this.label = new Text({
+      text: this.star.name.length > 13 ? `${this.star.name.slice(0, 12)}…` : this.star.name,
+      style: {
+        fontFamily: "monospace",
+        fontSize: this.rank < 3 ? 10 : 8.5,
+        fontWeight: this.rank < 3 ? "bold" : "normal",
+        fill: this.getStarColor(),
+      },
+    });
+    this.label.anchor.set(0.5, 0);
+    this.label.position.set(0, this.starSize + 4);
+    this.container.addChild(this.label);
 
     this.redraw();
+  }
+
+  private getStarColor(): number {
+    if (this.rank === 0) return 0xffffff; // #1 Core Diamond
+    if (this.rank < 3) return 0x38bdf8;  // Top 2-3 Cyan
+    if (this.rank < 7) return 0xfbbf24;  // Top 4-7 Solar Gold
+    if (this.rank < 12) return 0xf97316; // Top 8-12 Plasma Amber
+    return 0x67e8f9;                     // Outer Ring Electric Ice Blue
   }
 
   public updateData(star: Star, rank: number, maxRadius: number) {
@@ -74,11 +82,9 @@ export class StarSprite {
     this.rank = rank;
     const totalDollars = star.totalBidCents / 100;
     this.targetRadius = radius(totalDollars, maxRadius);
-    this.starSize = size(totalDollars) / 3;
-    if (this.label) {
-      this.label.text = this.star.name.length > 12 ? `${this.star.name.slice(0, 11)}…` : this.star.name;
-      this.label.style.fill = this.rank === 0 ? 0x38bdf8 : this.rank < 3 ? 0xfbbf24 : 0x71717a;
-    }
+    this.starSize = Math.max(5.5, size(totalDollars) / 3);
+    this.label.text = this.star.name.length > 13 ? `${this.star.name.slice(0, 12)}…` : this.star.name;
+    this.label.style.fill = this.getStarColor();
     this.redraw();
   }
 
@@ -92,59 +98,65 @@ export class StarSprite {
     this.graphic.clear();
     const isTop = this.rank === 0;
     const isPhoton = this.rank > 0 && this.rank < 3;
-    const isInner = this.rank >= 3 && this.rank < 8;
-
-    // Stellar spectral classification color palette
-    const color = isTop ? 0xffffff : isPhoton ? 0x38bdf8 : isInner ? 0xfbbf24 : 0x71717a;
-    const baseSize = this.isHovered || this.isFocused ? this.starSize * 1.45 : this.starSize;
-    const alphaMultiplier = this.isDimmed ? 0.2 : 1;
+    const isInner = this.rank >= 3 && this.rank < 7;
+    const color = this.getStarColor();
+    const baseSize = this.isHovered || this.isFocused ? this.starSize * 1.5 : this.starSize;
+    const alphaMultiplier = this.isDimmed ? 0.2 : 1.0;
 
     // Focused Target Reticle
     if (this.isFocused) {
-      this.graphic.circle(0, 0, baseSize + 12).stroke({ color: 0x38bdf8, alpha: 0.9, width: 1.5 });
-      this.graphic.circle(0, 0, baseSize + 6).stroke({ color: 0xffffff, alpha: 0.7, width: 1 });
+      this.graphic.circle(0, 0, baseSize + 14).stroke({ color: 0x38bdf8, alpha: 0.9, width: 1.5 });
+      this.graphic.circle(0, 0, baseSize + 7).stroke({ color: 0xffffff, alpha: 0.7, width: 1 });
     }
 
-    // Diffraction Spikes with Crosshairs
+    // Diffraction Spikes with Crosshairs (Luminous flare)
     if ((isTop || isPhoton || this.isHovered) && !this.isDimmed) {
-      const spikeLen = baseSize * (isTop ? 2.8 : isPhoton ? 2.0 : 1.6);
+      const spikeLen = baseSize * (isTop ? 2.8 : isPhoton ? 2.1 : 1.7);
       this.graphic
         .moveTo(-spikeLen, 0)
         .lineTo(spikeLen, 0)
-        .stroke({ color: isTop ? 0xffffff : 0x38bdf8, alpha: 0.35 * alphaMultiplier, width: 1 });
+        .stroke({ color: isTop ? 0xffffff : color, alpha: 0.45 * alphaMultiplier, width: 1 });
       this.graphic
         .moveTo(0, -spikeLen)
         .lineTo(0, spikeLen)
-        .stroke({ color: isTop ? 0xffffff : 0x38bdf8, alpha: 0.35 * alphaMultiplier, width: 1 });
+        .stroke({ color: isTop ? 0xffffff : color, alpha: 0.45 * alphaMultiplier, width: 1 });
 
-      // Diamond glint on core
       if (isTop) {
         const d = spikeLen * 0.55;
-        this.graphic.moveTo(-d, -d).lineTo(d, d).stroke({ color: 0x38bdf8, alpha: 0.2, width: 0.8 });
-        this.graphic.moveTo(d, -d).lineTo(-d, d).stroke({ color: 0x38bdf8, alpha: 0.2, width: 0.8 });
+        this.graphic.moveTo(-d, -d).lineTo(d, d).stroke({ color: 0x38bdf8, alpha: 0.3, width: 0.8 });
+        this.graphic.moveTo(d, -d).lineTo(-d, d).stroke({ color: 0x38bdf8, alpha: 0.3, width: 0.8 });
       }
     }
 
-    // Outer Corona Rings
-    if (isTop && !this.isDimmed) {
-      this.graphic.circle(0, 0, baseSize + 7).stroke({ color: 0x38bdf8, alpha: 0.45, width: 1.5 });
-      this.graphic.circle(0, 0, baseSize + 3.5).stroke({ color: 0xfbbf24, alpha: 0.65, width: 1.2 });
-    } else if ((isPhoton || this.isHovered) && !this.isDimmed) {
-      this.graphic.circle(0, 0, baseSize + 4.5).stroke({ color: isPhoton ? 0x38bdf8 : 0xfbbf24, alpha: 0.5, width: 1 });
+    // Ambient Luminous Corona Halo (Every star gets a visible atmospheric glow)
+    if (!this.isDimmed) {
+      if (isTop) {
+        this.graphic.circle(0, 0, baseSize + 8).stroke({ color: 0x38bdf8, alpha: 0.5, width: 1.5 });
+        this.graphic.circle(0, 0, baseSize + 4).stroke({ color: 0xfbbf24, alpha: 0.7, width: 1.2 });
+      } else if (isPhoton || isInner) {
+        this.graphic.circle(0, 0, baseSize + 4.5).stroke({ color, alpha: 0.55, width: 1.2 });
+      } else {
+        // Outer stars glow
+        this.graphic.circle(0, 0, baseSize + 3).stroke({ color, alpha: 0.38, width: 0.8 });
+      }
+
+      // Founding Star Permanent Golden Corona Ring
+      if (this.star.isFounding) {
+        this.graphic.circle(0, 0, baseSize + (isTop ? 10 : 5)).stroke({ color: 0xfbbf24, alpha: 0.6, width: 1.0 });
+      }
     }
 
-    // Founding Star Specular Halo
-    if (this.star.isFounding && !this.isDimmed) {
-      this.graphic.circle(0, 0, baseSize + 2.5).stroke({ color: 0xfbbf24, alpha: 0.4, width: 0.8 });
-    }
-
-    // Core Star Body
+    // Solid Luminous Core Star Body
     this.graphic.circle(0, 0, baseSize).fill({
-      color: this.star.verified ? 0xffffff : color,
-      alpha: (this.star.isDemo ? 0.75 : 1) * alphaMultiplier,
+      color: isTop ? 0xffffff : color,
+      alpha: (this.star.isDemo ? 0.95 : 1.0) * alphaMultiplier,
     });
 
-    if (this.label) this.label.alpha = alphaMultiplier;
+    // Label Visibility Logic: Always show top 10; on hover/focus show all
+    const showLabel = this.rank < 10 || this.isHovered || this.isFocused;
+    this.label.visible = showLabel && !this.isDimmed;
+    this.label.alpha = (this.isHovered ? 1.0 : this.rank < 3 ? 0.9 : 0.65) * alphaMultiplier;
+    this.label.position.set(0, baseSize + 4);
   }
 
   public tick(delta: number, cx: number, cy: number): { x: number; y: number } {
