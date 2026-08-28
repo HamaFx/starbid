@@ -99,7 +99,7 @@ export function useGalaxyScene(
         // Layout coordinates are local to the galaxy world. Translate the
         // world origin to its center, then scale the persistent world into the
         // actual canvas viewport.
-        const initialScale = Math.min(initialWidth / worldWidth, initialHeight / worldHeight) * 0.9;
+        const initialScale = Math.min(initialWidth / worldWidth, initialHeight / worldHeight) * 1.35;
         const viewport = new GalaxyViewport(world, initialWidth / 2, initialHeight / 2, initialScale);
         viewportRef.current = viewport;
         viewport.updateWorldRadius(maxRadius, worldWidth, worldHeight);
@@ -196,7 +196,7 @@ export function useGalaxyScene(
               cx = layout.cx;
               cy = layout.cy;
               maxRadius = layout.maxRadius;
-              viewport.updateCenter(width / 2, height / 2, Math.min(width / layout.worldWidth, height / layout.worldHeight) * 0.9);
+              viewport.updateCenter(width / 2, height / 2, Math.min(width / layout.worldWidth, height / layout.worldHeight) * 1.35);
               viewport.updateWorldRadius(maxRadius, layout.worldWidth, layout.worldHeight);
               trails.clear();
               const population = Array.from(sprites ?? [], ([, sprite]) => sprite.star);

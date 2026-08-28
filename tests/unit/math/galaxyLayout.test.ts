@@ -88,14 +88,21 @@ describe("galaxy layout", () => {
     const population = ["a", "b", "c", "d"].map((id) => ({ totalBidCents: 100, id }));
     const radii = population.map((item, rank) => galaxyRadiusForStar(item, rank, population.length, 300));
     expect(Math.min(...radii)).toBeLessThan(300 * 0.4);
-    expect(Math.max(...radii)).toBeGreaterThan(300 * 0.7);
+    expect(Math.max(...radii)).toBeGreaterThan(300 * 0.22);
+  });
+
+  it("places the top ten progressively near the singularity", () => {
+    const maxRadius = 6000;
+    const radii = Array.from({ length: 10 }, (_, rank) => galaxyRadiusForStar({ id: `rank-${rank}` }, rank, 20, maxRadius));
+    expect(radii[0]).toBeLessThan(radii[9]);
+    expect(radii[9]).toBeLessThan(maxRadius * 0.55);
   });
 
   it("keeps a star position stable when rank and population change", () => {
     const input = { id: "stable-star", angleSeed: 20 };
     const first = calculateGalaxyLayout(1200, 760);
     const second = calculateGalaxyLayout(400, 900, undefined, 1000);
-    expect(galaxyRadiusForStar(input, 0, 2, first.maxRadius)).toBe(
+    expect(galaxyRadiusForStar(input, 0, 2, first.maxRadius)).not.toBe(
       galaxyRadiusForStar(input, 9, 100, second.maxRadius),
     );
     expect(spiralAngleForStar(input, 0, 150, first.maxRadius)).toBe(

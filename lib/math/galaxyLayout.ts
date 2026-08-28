@@ -141,12 +141,18 @@ export function spiralAngleForStar(
 
 export function galaxyRadiusForStar(
   star: Pick<Star, "id">,
-  _rank: number,
+  rank: number,
   _starCount: number,
   maxRadius: number,
 ): number {
   const seed = hashToUnit(`${star.id}:radius`);
   const minimum = GALAXY_SINGULARITY_EXCLUSION_RATIO;
+  // The elite occupy the inner galaxy in rank order; the rest retain stable
+  // deterministic arm placement across the wider disk.
+  if (rank < 10) {
+    const rankedRadius = minimum + (rank / 9) * 0.34;
+    return maxRadius * Math.min(0.52, rankedRadius + seed * 0.025);
+  }
   const radial = minimum + Math.pow(seed, 0.68) * (0.94 - minimum);
   return maxRadius * radial;
 }
