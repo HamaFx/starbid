@@ -60,6 +60,7 @@ export function useGalaxyScene(
     let onPointerUp: ((e: PointerEvent) => void) | null = null;
     let onPointerCapture: ((e: PointerEvent) => void) | null = null;
     let onDblClick: ((e: MouseEvent) => void) | null = null;
+    let onWindowBlur: (() => void) | null = null;
 
     const initialWidth = host.clientWidth || BASE_WIDTH;
     const initialHeight = host.clientHeight || BASE_HEIGHT;
@@ -254,7 +255,8 @@ export function useGalaxyScene(
         window.addEventListener("pointermove", onPointerMove);
         window.addEventListener("pointerup", onPointerUp);
         window.addEventListener("pointercancel", onPointerUp);
-        window.addEventListener("blur", () => viewport.cancelPointers());
+        onWindowBlur = () => viewport.cancelPointers();
+        window.addEventListener("blur", onWindowBlur);
         app.canvas.addEventListener("dblclick", onDblClick);
 
         setIsReady(true);
@@ -278,6 +280,7 @@ export function useGalaxyScene(
         window.removeEventListener("pointerup", onPointerUp);
         window.removeEventListener("pointercancel", onPointerUp);
       }
+      if (onWindowBlur) window.removeEventListener("blur", onWindowBlur);
       sprites?.forEach((s) => s.destroy());
       sprites?.clear();
       trailsRef.current?.destroy();

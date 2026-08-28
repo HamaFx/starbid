@@ -58,6 +58,16 @@ describe("GalaxyViewport", () => {
     expect(camera.targetY).toBe(0);
   });
 
+  it("keeps the pinch midpoint anchored while zooming", () => {
+    const camera = viewport();
+    const rect = { left: 100, top: 50 } as DOMRect;
+    camera.onPointerDown({ pointerId: 1, clientX: 200, clientY: 150 } as PointerEvent, rect);
+    camera.onPointerDown({ pointerId: 2, clientX: 300, clientY: 150 } as PointerEvent, rect);
+    camera.onPointerMove({ pointerId: 2, clientX: 400, clientY: 150 } as PointerEvent, rect);
+    expect(camera.targetScale).toBeGreaterThan(1);
+    expect(camera.targetX).toBeCloseTo(0);
+  });
+
   it("uses canvas-local coordinates for pointer dragging", () => {
     const camera = viewport();
     const rect = { left: 100, top: 50 } as DOMRect;

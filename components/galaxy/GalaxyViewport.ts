@@ -41,6 +41,7 @@ export class GalaxyViewport {
   private initialPinchDist = 0;
   private initialPinchScale = 1.0;
   private initialPinchMidpoint = { x: 0, y: 0 };
+  private pinchWorldPoint = { x: 0, y: 0 };
 
   constructor(world: Container, cx: number, cy: number, defaultScale = 1.0) {
     this.world = world;
@@ -102,6 +103,10 @@ export class GalaxyViewport {
         x: (pts[0].x + pts[1].x) / 2,
         y: (pts[0].y + pts[1].y) / 2,
       };
+      this.pinchWorldPoint = {
+        x: (this.initialPinchMidpoint.x - this.cx - this.targetX) / this.targetScale,
+        y: (this.initialPinchMidpoint.y - this.cy - this.targetY) / this.targetScale,
+      };
     }
   }
 
@@ -125,14 +130,9 @@ export class GalaxyViewport {
           Math.min(this.maxZoom, this.initialPinchScale * pinchRatio)
         );
 
-        const initialMidX = this.initialPinchMidpoint.x - canvasRect.left;
-        const initialMidY = this.initialPinchMidpoint.y - canvasRect.top;
-        const wx = (initialMidX - this.cx - this.targetX) / this.targetScale;
-        const wy = (initialMidY - this.cy - this.targetY) / this.targetScale;
-
         this.targetScale = newTarget;
-        this.targetX = midX - this.cx - wx * newTarget;
-        this.targetY = midY - this.cy - wy * newTarget;
+        this.targetX = midX - this.cx - this.pinchWorldPoint.x * newTarget;
+        this.targetY = midY - this.cy - this.pinchWorldPoint.y * newTarget;
       }
       return;
     }
@@ -164,6 +164,7 @@ export class GalaxyViewport {
       this.isDragging = false;
       this.initialPinchDist = 0;
       this.initialPinchMidpoint = { x: 0, y: 0 };
+      this.pinchWorldPoint = { x: 0, y: 0 };
     }
   }
 
@@ -174,6 +175,7 @@ export class GalaxyViewport {
     this.activePointers.clear();
     this.isDragging = false;
     this.initialPinchDist = 0;
+    this.pinchWorldPoint = { x: 0, y: 0 };
     this.vx = 0;
     this.vy = 0;
   }
