@@ -35,6 +35,7 @@ export function useGalaxyScene(
   const starContainerRef = useRef<Container | null>(null);
   const populationRef = useRef(20);
   const leaderRef = useRef(leader);
+  const leaderSelectRef = useRef(onSelectLeader);
 
   const triggerShockwave = useCallback(
     (x: number, y: number, type: "spawn" | "fuel" | "singularity_takeover" | "click") => {
@@ -110,7 +111,7 @@ export function useGalaxyScene(
 
         // Layer 5: Singularity Core & Photon Sphere
         const coreContainer = new Container();
-        coreContainer.addChild(drawSingularityCore(cx, cy, leaderRef.current, onSelectLeader, undefined));
+        coreContainer.addChild(drawSingularityCore(cx, cy, leaderRef.current, () => leaderSelectRef.current?.(), undefined));
         world.addChild(coreContainer);
 
         const lensing = new Lensing();
@@ -195,7 +196,7 @@ export function useGalaxyScene(
               guidesContainer.addChild(drawAccretionGuides(cx, cy, maxRadius));
 
               coreContainer.removeChildren();
-              coreContainer.addChild(drawSingularityCore(cx, cy, leaderRef.current, onSelectLeader, undefined));
+              coreContainer.addChild(drawSingularityCore(cx, cy, leaderRef.current, () => leaderSelectRef.current?.(), undefined));
             }
           }
         });
@@ -260,7 +261,7 @@ export function useGalaxyScene(
       starContainerRef.current = null;
       app.destroy(true, { children: true });
     };
-  }, [hostRef, spritesRef, trailsRef, viewportRef, pausedRef, speedRef, lod, leader, onSelectLeader]);
+  }, [hostRef, spritesRef, trailsRef, viewportRef, pausedRef, speedRef, lod]);
 
   // Update filter highlights on sprites
   useEffect(() => {
@@ -292,12 +293,13 @@ export function useGalaxyScene(
 
   useEffect(() => {
     leaderRef.current = leader;
+    leaderSelectRef.current = onSelectLeader;
     const viewport = viewportRef.current;
     const host = hostRef.current;
     if (!viewport || !host) return;
     const nextLayout = calculateGalaxyLayout(host.clientWidth || BASE_WIDTH, host.clientHeight || BASE_HEIGHT, undefined, populationRef.current);
     viewport.updateWorldRadius?.(nextLayout.maxRadius);
-  }, [hostRef, leader, viewportRef]);
+  }, [hostRef, leader, onSelectLeader, viewportRef]);
 
   const resetCamera = useCallback(() => viewportRef.current?.reset(), [viewportRef]);
   const focusCameraOn = useCallback(
