@@ -45,15 +45,20 @@ export function useGalaxyScene(
     appRef.current = app;
     const sprites = spritesRef.current;
 
+    let resizeObserver: ResizeObserver | null = null;
     let onWheel: ((e: WheelEvent) => void) | null = null;
-    let onDown: ((e: PointerEvent) => void) | null = null;
-    let onMove: ((e: PointerEvent) => void) | null = null;
-    let onUp: (() => void) | null = null;
+    let onPointerDown: ((e: PointerEvent) => void) | null = null;
+    let onPointerMove: ((e: PointerEvent) => void) | null = null;
+    let onPointerUp: ((e: PointerEvent) => void) | null = null;
+    let onDblClick: ((e: MouseEvent) => void) | null = null;
+
+    const initialWidth = host.clientWidth || BASE_WIDTH;
+    const initialHeight = host.clientHeight || BASE_HEIGHT;
 
     void app
       .init({
-        width: BASE_WIDTH,
-        height: BASE_HEIGHT,
+        width: initialWidth,
+        height: initialHeight,
         background: 0x07070b,
         antialias: true,
         resolution: typeof window !== "undefined" ? Math.min(window.devicePixelRatio || 1, 2) : 1,
@@ -74,10 +79,11 @@ export function useGalaxyScene(
         app.canvas.style.width = "100%";
         app.canvas.style.height = "100%";
         app.canvas.style.display = "block";
+        app.canvas.style.touchAction = "none";
 
-        const cx = BASE_WIDTH / 2;
-        const cy = BASE_HEIGHT / 2;
-        const maxRadius = Math.min(BASE_WIDTH, BASE_HEIGHT) * 0.44;
+        let cx = initialWidth / 2;
+        let cy = initialHeight / 2;
+        const maxRadius = Math.min(initialWidth, initialHeight) * 0.42;
 
         const world = new Container();
         app.stage.addChild(world);
@@ -152,31 +158,53 @@ export function useGalaxyScene(
           constellation.renderLinks(starNodes, hoveredStarId);
         });
 
+        // ResizeObserver for dynamic crisp resolution without distortion
+        resizeObserver = new ResizeObserver((entries) => {
+          for (const entry of entries) {
+            const { width, height } = entry.contentRect;
+            if (width > 50 && height > 50) {
+              app.renderer.resize(width, height);
+              cx = width / 2;
+              cy = height / 2;
+              viewport.updateCenter(cx, cy);
+            }
+          }
+        });
+        resizeObserver.observe(host);
+
+        // Native Multi-Touch, Trackpad Pinch & Mouse Wheel Zoom
         onWheel = (e: WheelEvent) => {
           e.preventDefault();
           const rect = app.canvas.getBoundingClientRect();
-          viewport.onWheel(
-            e.deltaY,
-            (e.clientX - rect.left) * (BASE_WIDTH / rect.width),
-            (e.clientY - rect.top) * (BASE_HEIGHT / rect.height),
-            cx,
-            cy
-          );
+          const mouseX = e.clientX - rect.left;
+          const mouseY = e.clientY - rect.top;
+          viewport.onWheel(e.deltaY, mouseX, mouseY, e.ctrlKey);
         };
-        onDown = (e: PointerEvent) => {
-          viewport.startDrag(e.clientX, e.clientY);
+
+        onPointerDown = (e: PointerEvent) => {
+          viewport.onPointerDown(e);
         };
-        onMove = (e: PointerEvent) => {
-          viewport.onDrag(e.clientX, e.clientY);
+
+        onPointerMove = (e: PointerEvent) => {
+          const rect = app.canvas.getBoundingClientRect();
+          viewport.onPointerMove(e, rect);
         };
-        onUp = () => {
-          viewport.endDrag();
+
+        onPointerUp = (e: PointerEvent) => {
+          viewport.onPointerUp(e);
+        };
+
+        onDblClick = (e: MouseEvent) => {
+          const rect = app.canvas.getBoundingClientRect();
+          viewport.onDoubleTap(e.clientX - rect.left, e.clientY - rect.top);
         };
 
         app.canvas.addEventListener("wheel", onWheel, { passive: false });
-        app.canvas.addEventListener("pointerdown", onDown);
-        window.addEventListener("pointermove", onMove);
-        window.addEventListener("pointerup", onUp);
+        app.canvas.addEventListener("pointerdown", onPointerDown);
+        window.addEventListener("pointermove", onPointerMove);
+        window.addEventListener("pointerup", onPointerUp);
+        window.addEventListener("pointercancel", onPointerUp);
+        app.canvas.addEventListener("dblclick", onDblClick);
 
         setIsReady(true);
       });
@@ -184,8 +212,12 @@ export function useGalaxyScene(
     return () => {
       mounted = false;
       setIsReady(false);
-      if (onMove) window.removeEventListener("pointermove", onMove);
-      if (onUp) window.removeEventListener("pointerup", onUp);
+      if (resizeObserver) resizeObserver.disconnect();
+      if (onPointerMove) window.removeEventListener("pointermove", onPointerMove);
+      if (onPointerUp) {
+        window.removeEventListener("pointerup", onPointerUp);
+        window.removeEventListener("pointercancel", onPointerUp);
+      }
       sprites?.forEach((s) => s.destroy());
       sprites?.clear();
       trailsRef.current?.destroy();

@@ -18,51 +18,141 @@ export class GalaxyViewport {
   private lastDragY = 0;
   private vx = 0;
   private vy = 0;
-  private minZoom = 0.4;
-  private maxZoom = 3.0;
+  public minZoom = 0.35;
+  public maxZoom = 4.0;
+
+  // Multi-touch pinch tracking
+  private activePointers = new Map<number, { x: number; y: number }>();
+  private initialPinchDist = 0;
+  private initialPinchScale = 1;
 
   constructor(world: Container, cx: number, cy: number) {
     this.world = world;
     this.cx = cx;
     this.cy = cy;
-    // Set pivot directly to the celestial center (Singularity Core)
+    // Set pivot to the Singularity Core
     this.world.pivot.set(cx, cy);
     this.world.position.set(cx, cy);
   }
 
-  public onWheel(deltaY: number, mouseX: number, mouseY: number, cx: number, cy: number) {
-    const factor = deltaY < 0 ? 1.12 : 0.89;
-    const newTarget = Math.max(this.minZoom, Math.min(this.maxZoom, this.targetScale * factor));
-    
-    // Zoom centered smoothly around center pivot
+  public updateCenter(cx: number, cy: number) {
+    this.cx = cx;
+    this.cy = cy;
+    this.world.pivot.set(cx, cy);
+  }
+
+  /**
+   * Cursor-anchored smooth wheel & trackpad pinch zooming
+   */
+  public onWheel(deltaY: number, mouseX: number, mouseY: number, isPinch = false) {
+    // Determine zoom factor (finer precision for trackpad pinch gestures)
+    const zoomStep = isPinch ? Math.exp(-deltaY * 0.015) : deltaY < 0 ? 1.15 : 0.87;
+    const newTarget = Math.max(this.minZoom, Math.min(this.maxZoom, this.targetScale * zoomStep));
+    if (newTarget === this.targetScale) return;
+
+    // Anchor zoom around the cursor pointer
+    const wx = (mouseX - this.cx - this.targetX) / this.targetScale;
+    const wy = (mouseY - this.cy - this.targetY) / this.targetScale;
+
     this.targetScale = newTarget;
+    this.targetX = mouseX - this.cx - wx * newTarget;
+    this.targetY = mouseY - this.cy - wy * newTarget;
   }
 
-  public startDrag(x: number, y: number) {
-    this.isDragging = true;
-    this.lastDragX = x;
-    this.lastDragY = y;
-    this.vx = 0;
-    this.vy = 0;
+  /**
+   * Pointer down handling with multi-touch pinch support
+   */
+  public onPointerDown(e: PointerEvent) {
+    this.activePointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+
+    if (this.activePointers.size === 1) {
+      this.isDragging = true;
+      this.lastDragX = e.clientX;
+      this.lastDragY = e.clientY;
+      this.vx = 0;
+      this.vy = 0;
+    } else if (this.activePointers.size === 2) {
+      this.isDragging = false;
+      const pts = Array.from(this.activePointers.values());
+      this.initialPinchDist = Math.hypot(pts[0].x - pts[1].x, pts[0].y - pts[1].y);
+      this.initialPinchScale = this.targetScale;
+    }
   }
 
-  public onDrag(x: number, y: number) {
-    if (!this.isDragging) return;
-    const dx = x - this.lastDragX;
-    const dy = y - this.lastDragY;
-    this.lastDragX = x;
-    this.lastDragY = y;
+  /**
+   * Pointer move handling with momentum drag and multi-touch pinch
+   */
+  public onPointerMove(e: PointerEvent, canvasRect: DOMRect) {
+    if (!this.activePointers.has(e.pointerId)) return;
+    this.activePointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
 
-    this.targetX += dx;
-    this.targetY += dy;
+    if (this.activePointers.size === 2) {
+      // Handle multi-touch pinch-to-zoom
+      const pts = Array.from(this.activePointers.values());
+      const currentDist = Math.hypot(pts[0].x - pts[1].x, pts[0].y - pts[1].y);
+      if (this.initialPinchDist > 0) {
+        const pinchRatio = currentDist / this.initialPinchDist;
+        const midX = (pts[0].x + pts[1].x) / 2 - canvasRect.left;
+        const midY = (pts[0].y + pts[1].y) / 2 - canvasRect.top;
+        const newTarget = Math.max(
+          this.minZoom,
+          Math.min(this.maxZoom, this.initialPinchScale * pinchRatio)
+        );
 
-    // Accumulate smooth momentum velocity
-    this.vx = dx * 0.75;
-    this.vy = dy * 0.75;
+        const wx = (midX - this.cx - this.targetX) / this.targetScale;
+        const wy = (midY - this.cy - this.targetY) / this.targetScale;
+
+        this.targetScale = newTarget;
+        this.targetX = midX - this.cx - wx * newTarget;
+        this.targetY = midY - this.cy - wy * newTarget;
+      }
+      return;
+    }
+
+    if (this.isDragging && this.activePointers.size === 1) {
+      const dx = e.clientX - this.lastDragX;
+      const dy = e.clientY - this.lastDragY;
+      this.lastDragX = e.clientX;
+      this.lastDragY = e.clientY;
+
+      this.targetX += dx;
+      this.targetY += dy;
+
+      this.vx = dx * 0.7;
+      this.vy = dy * 0.7;
+    }
   }
 
-  public endDrag() {
-    this.isDragging = false;
+  public onPointerUp(e: PointerEvent) {
+    this.activePointers.delete(e.pointerId);
+    if (this.activePointers.size === 1) {
+      const remaining = Array.from(this.activePointers.values())[0];
+      this.isDragging = true;
+      this.lastDragX = remaining.x;
+      this.lastDragY = remaining.y;
+      this.vx = 0;
+      this.vy = 0;
+    } else if (this.activePointers.size === 0) {
+      this.isDragging = false;
+      this.initialPinchDist = 0;
+    }
+  }
+
+  /**
+   * Double-click/double-tap to toggle zoom
+   */
+  public onDoubleTap(mouseX: number, mouseY: number) {
+    if (this.targetScale > 1.3) {
+      this.reset();
+    } else {
+      const newTarget = 2.0;
+      const wx = (mouseX - this.cx - this.targetX) / this.targetScale;
+      const wy = (mouseY - this.cy - this.targetY) / this.targetScale;
+
+      this.targetScale = newTarget;
+      this.targetX = mouseX - this.cx - wx * newTarget;
+      this.targetY = mouseY - this.cy - wy * newTarget;
+    }
   }
 
   public zoomIn() {
@@ -73,10 +163,10 @@ export class GalaxyViewport {
     this.targetScale = Math.max(this.minZoom, this.targetScale * 0.8);
   }
 
-  public focusOn(targetWorldX: number, targetWorldY: number, cx: number, cy: number, zoom = 1.6) {
+  public focusOn(targetWorldX: number, targetWorldY: number, zoom = 1.8) {
     this.targetScale = Math.min(this.maxZoom, Math.max(this.minZoom, zoom));
-    this.targetX = (cx - targetWorldX) * this.targetScale;
-    this.targetY = (cy - targetWorldY) * this.targetScale;
+    this.targetX = (this.cx - targetWorldX) * this.targetScale;
+    this.targetY = (this.cy - targetWorldY) * this.targetScale;
     this.vx = 0;
     this.vy = 0;
   }
@@ -90,8 +180,8 @@ export class GalaxyViewport {
   }
 
   public tick(delta: number) {
-    // Apply inertial drift when not actively dragging
-    if (!this.isDragging && (Math.abs(this.vx) > 0.05 || Math.abs(this.vy) > 0.05)) {
+    // Apply inertial drift
+    if (!this.isDragging && this.activePointers.size === 0 && (Math.abs(this.vx) > 0.05 || Math.abs(this.vy) > 0.05)) {
       this.targetX += this.vx * delta;
       this.targetY += this.vy * delta;
       const friction = Math.pow(0.88, delta);
@@ -100,13 +190,12 @@ export class GalaxyViewport {
     }
 
     // Spring damping ease to target position and scale
-    const ease = 0.14 * Math.min(delta, 2);
+    const ease = 0.16 * Math.min(delta, 2);
     this.scale += (this.targetScale - this.scale) * ease;
     this.x += (this.targetX - this.x) * ease;
     this.y += (this.targetY - this.y) * ease;
 
     this.world.scale.set(this.scale);
-    // Keep positioned around center pivot (cx, cy)
     this.world.position.set(this.cx + this.x, this.cy + this.y);
   }
 }
