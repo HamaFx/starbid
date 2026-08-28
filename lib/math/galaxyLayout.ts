@@ -1,12 +1,14 @@
 import type { Star } from "@/lib/types";
 
 export const GALAXY_Y_SCALE = 0.62;
-export const GALAXY_HORIZONTAL_MARGIN = 0.52;
-export const GALAXY_VERTICAL_MARGIN = 0.52;
+export const GALAXY_HORIZONTAL_MARGIN = 0.9;
+export const GALAXY_VERTICAL_MARGIN = 0.9;
 export const GALAXY_MIN_ORBIT_RATIO = 0.16;
 export const GALAXY_MAX_ORBIT_RATIO = 0.99;
 export const GALAXY_SPIRAL_ARMS = 4;
-export const GALAXY_SPIRAL_TWIST = 1.9;
+export const GALAXY_SPIRAL_TWIST = 2.8;
+export const GALAXY_ARM_WIDTH = 0.24;
+export const GALAXY_BULGE_RATIO = 0.22;
 
 export type GalaxyLayout = {
   width: number;
@@ -98,12 +100,48 @@ export function spiralAngleForStar(
   radius: number,
   maxRadius: number,
 ): number {
-  const seed = ((star.angleSeed * 0.017453292519943295) + hashToUnit(star.id) * Math.PI * 2);
   const radial = Math.min(1, Math.max(0, radius / Math.max(1, maxRadius)));
   const arm = ((rank % GALAXY_SPIRAL_ARMS) / GALAXY_SPIRAL_ARMS) * Math.PI * 2;
+  const seed = star.angleSeed * Math.PI / 180 + hashToUnit(star.id) * Math.PI * 2;
   const armAngle = arm + radial * GALAXY_SPIRAL_TWIST;
-  const jitter = (hashToUnit(`${star.id}:jitter`) - 0.5) * (0.34 - radial * 0.12);
-  return armAngle + seed * 0.18 + jitter;
+  const jitter = (hashToUnit(`${star.id}:jitter`) - 0.5) * GALAXY_ARM_WIDTH * (1.2 - radial * 0.35);
+  return armAngle + seed * 0.12 + jitter;
+}
+
+export function galaxyRadiusForStar(
+  star: Pick<Star, "id">,
+  rank: number,
+  starCount: number,
+  maxRadius: number,
+): number {
+  const normalizedRank = starCount <= 1 ? 0.5 : rank / (starCount - 1);
+  const seed = hashToUnit(`${star.id}:radius`);
+  const bulge = GALAXY_BULGE_RATIO + normalizedRank * (1 - GALAXY_BULGE_RATIO);
+  return maxRadius * Math.min(0.96, Math.max(0.08, bulge * 0.82 + seed * 0.18));
+}
+
+export function galaxyPointForStar(
+  star: Pick<Star, "id" | "angleSeed">,
+  rank: number,
+  starCount: number,
+  maxRadius: number,
+  cx = 0,
+  cy = 0,
+): GalaxyPoint {
+  const radius = galaxyRadiusForStar(star, rank, starCount, maxRadius);
+  return orbitPoint(cx, cy, radius, spiralAngleForStar(star, rank, radius, maxRadius));
+} 
+
+export function spiralArmPoint(
+  arm: number,
+  radial: number,
+  maxRadius: number,
+  cx = 0,
+  cy = 0,
+): GalaxyPoint {
+  const radius = maxRadius * Math.max(0, Math.min(1, radial));
+  const angle = (arm / GALAXY_SPIRAL_ARMS) * Math.PI * 2 + radial * GALAXY_SPIRAL_TWIST;
+  return orbitPoint(cx, cy, radius, angle);
 }
 
 function hashToUnit(value: string): number {

@@ -3,6 +3,7 @@ import {
   calculateGalaxyLayout,
   compareStars,
   crowdScale,
+  galaxyRadiusForStar,
   orbitPoint,
   orbitRadiusForStar,
   spiralAngleForStar,
@@ -31,8 +32,8 @@ function star(id: string, bid: number, enteredAt: string, status: Star["status"]
 describe("galaxy layout", () => {
   it("fits the projected ellipse inside narrow and tall viewports", () => {
     const layout = calculateGalaxyLayout(400, 700);
-    expect(layout.maxRadius).toBeLessThanOrEqual(400 * 0.52);
-    expect(layout.maxRadius * layout.yScale).toBeLessThanOrEqual(700 * 0.52);
+    expect(layout.maxRadius).toBeLessThanOrEqual(400 * 0.9);
+    expect(layout.maxRadius * layout.yScale).toBeLessThanOrEqual(700 * 0.9);
   });
 
   it("projects the center and cardinal points consistently", () => {
@@ -51,6 +52,13 @@ describe("galaxy layout", () => {
     const radii = population.map((item) => orbitRadiusForStar(item, population, 300));
     expect(new Set(radii).size).toBeGreaterThan(2);
     expect(radii.every((value) => value >= 300 * 0.16 && value <= 300 * 0.99)).toBe(true);
+  });
+
+  it("places stars across the full disk independently of bid amount", () => {
+    const population = ["a", "b", "c", "d"].map((id) => ({ totalBidCents: 100, id }));
+    const radii = population.map((item, rank) => galaxyRadiusForStar(item, rank, population.length, 300));
+    expect(Math.min(...radii)).toBeLessThan(300 * 0.4);
+    expect(Math.max(...radii)).toBeGreaterThan(300 * 0.7);
   });
 
   it("places the same star deterministically on a spiral arm", () => {

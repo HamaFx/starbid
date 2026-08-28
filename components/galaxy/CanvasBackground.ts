@@ -1,40 +1,35 @@
 import { Container, Graphics } from "pixi.js";
-import { GALAXY_Y_SCALE } from "@/lib/math/galaxyLayout";
+import { GALAXY_SPIRAL_ARMS, GALAXY_SPIRAL_TWIST, GALAXY_Y_SCALE, spiralArmPoint } from "@/lib/math/galaxyLayout";
 
 export function drawAccretionGuides(cx: number, cy: number, maxRadius: number): Container {
   const container = new Container();
-  const guides = new Graphics();
+  const galaxy = new Graphics();
 
-  // Subtle coordinate grid crosshairs spanning the full supermassive universe
-  guides
-    .moveTo(cx - maxRadius * 1.05, cy)
-    .lineTo(cx + maxRadius * 1.05, cy)
-    .stroke({ color: 0x38bdf8, alpha: 0.05, width: 1.5 });
+  galaxy.ellipse(cx, cy, maxRadius, maxRadius * GALAXY_Y_SCALE).fill({ color: 0x172554, alpha: 0.16 });
+  galaxy.ellipse(cx, cy, maxRadius * 0.78, maxRadius * GALAXY_Y_SCALE * 0.78).fill({ color: 0x312e81, alpha: 0.1 });
+  galaxy.ellipse(cx, cy, maxRadius * 0.34, maxRadius * GALAXY_Y_SCALE * 0.34).fill({ color: 0xfbbf24, alpha: 0.08 });
 
-  guides
-    .moveTo(cx, cy - maxRadius * 0.7)
-    .lineTo(cx, cy + maxRadius * 0.7)
-    .stroke({ color: 0x38bdf8, alpha: 0.05, width: 1.5 });
+  for (let arm = 0; arm < GALAXY_SPIRAL_ARMS; arm += 1) {
+    const points = 36;
+    for (let index = 1; index < points; index += 1) {
+      const radial = index / (points - 1);
+      const point = spiralArmPoint(arm, radial, maxRadius, cx, cy);
+      const previous = spiralArmPoint(arm, radial - 1 / (points - 1), maxRadius, cx, cy);
+      const alpha = 0.035 + (1 - radial) * 0.03;
+      galaxy.moveTo(previous.x, previous.y).lineTo(point.x, point.y).stroke({
+        color: arm % 2 === 0 ? 0x38bdf8 : 0xfbbf24,
+        alpha,
+        width: Math.max(5, maxRadius * 0.025 * (1 - radial * 0.45)),
+      });
+      galaxy.moveTo(previous.x, previous.y).lineTo(point.x, point.y).stroke({
+        color: 0xffffff,
+        alpha: alpha * 0.28,
+        width: Math.max(1, maxRadius * 0.006),
+      });
+    }
+  }
 
-  // Concentric orbit boundary rings with the shared tilted projection.
-  const rings = [
-    { r: maxRadius * 0.95, color: 0xffffff, alpha: 0.04, width: 1.0 },
-    { r: maxRadius * 0.78, color: 0xffffff, alpha: 0.05, width: 1.0 },
-    { r: maxRadius * 0.58, color: 0xfbbf24, alpha: 0.07, width: 1.2 },
-    { r: maxRadius * 0.38, color: 0x38bdf8, alpha: 0.12, width: 1.4 },
-    { r: maxRadius * 0.20, color: 0x22d3ee, alpha: 0.20, width: 1.6 },
-    { r: maxRadius * 0.10, color: 0x38bdf8, alpha: 0.35, width: 2.0 },
-  ];
-
-  rings.forEach((ring) => {
-    guides.ellipse(cx, cy, ring.r, ring.r * GALAXY_Y_SCALE).stroke({
-      color: ring.color,
-      alpha: ring.alpha,
-      width: ring.width,
-    });
-  });
-
-  container.addChild(guides);
+  container.addChild(galaxy);
   return container;
 }
 
@@ -42,19 +37,12 @@ export function drawSingularityCore(cx: number, cy: number): Container {
   const container = new Container();
   const core = new Graphics();
 
-  // Supermassive Relativistic Ergosphere & Accretion Lens Glow Halo
   core.circle(cx, cy, 64).fill({ color: 0x38bdf8, alpha: 0.04 });
   core.circle(cx, cy, 48).stroke({ color: 0xfbbf24, alpha: 0.25, width: 1.5 });
-
-  // Photon Sphere / Einstein Ring (Intense blue relativistic photon boundary)
-  core.circle(cx, cy, 36).stroke({ color: 0x38bdf8, alpha: 0.95, width: 3.0 });
+  core.circle(cx, cy, 36).stroke({ color: 0x38bdf8, alpha: 0.95, width: 3 });
   core.circle(cx, cy, 36).fill({ color: 0x38bdf8, alpha: 0.08 });
-
-  // Black Hole Event Horizon Shadow Core
   core.circle(cx, cy, 30).fill({ color: 0x050508, alpha: 1 });
   core.circle(cx, cy, 30).stroke({ color: 0x000000, alpha: 0.95, width: 3 });
-
-  // Singularity Center Gravitational Point
   core.circle(cx, cy, 4.5).fill({ color: 0xffffff, alpha: 0.95 });
 
   container.addChild(core);

@@ -1,6 +1,6 @@
 import { Container, Graphics, Text } from "pixi.js";
 import { angularVelocity } from "@/lib/math/orbit";
-import { orbitPoint, GALAXY_Y_SCALE, orbitRadiusForStar, crowdScale, spiralAngleForStar } from "@/lib/math/galaxyLayout";
+import { orbitPoint, GALAXY_Y_SCALE, crowdScale, galaxyRadiusForStar, spiralAngleForStar } from "@/lib/math/galaxyLayout";
 import type { Star } from "@/lib/types";
 
 export class StarSprite {
@@ -51,7 +51,7 @@ export class StarSprite {
       this.onHover(null, 0, 0);
     });
 
-    this.targetRadius = orbitRadiusForStar(star, population, maxRadius);
+    this.targetRadius = galaxyRadiusForStar(star, rank, population.length, maxRadius);
     this.currentRadius = this.targetRadius;
     this.currentAngle = spiralAngleForStar(star, rank, this.currentRadius, maxRadius);
     this.starSize = this.calculateStarSize();
@@ -100,7 +100,7 @@ export class StarSprite {
     this.rank = rank;
     this.maxRadius = maxRadius;
     this.population = population;
-    this.targetRadius = orbitRadiusForStar(star, population, maxRadius);
+    this.targetRadius = galaxyRadiusForStar(star, rank, population.length, maxRadius);
     this.starSize = this.calculateStarSize();
     this.label.text = this.getLabelText();
     this.label.style.fill = this.getStarColor();
@@ -109,12 +109,12 @@ export class StarSprite {
 
   public updatePopulation(population: Pick<Star, "totalBidCents">[]) {
     this.population = population;
-    this.targetRadius = orbitRadiusForStar(this.star, population, this.maxRadius);
+    this.targetRadius = galaxyRadiusForStar(this.star, this.rank, population.length, this.maxRadius);
   }
 
   public updateLayout(maxRadius: number) {
     this.maxRadius = maxRadius;
-    this.targetRadius = orbitRadiusForStar(this.star, this.population, maxRadius);
+    this.targetRadius = galaxyRadiusForStar(this.star, this.rank, this.population.length, maxRadius);
   }
 
   public getWorldPosition() {
@@ -199,7 +199,7 @@ export class StarSprite {
     this.currentRadius += (this.targetRadius - this.currentRadius) * ease;
 
     const speed = angularVelocity(Math.max(10, this.currentRadius), 28);
-    this.currentAngle += speed * 0.0006 * delta;
+    this.currentAngle += speed * 0.00012 * delta;
     const point = orbitPoint(cx, cy, this.currentRadius, this.currentAngle, GALAXY_Y_SCALE);
     const x = point.x;
     const y = point.y;

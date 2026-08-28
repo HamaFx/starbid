@@ -162,7 +162,8 @@ export function useGalaxyScene(
           });
 
           if (lod === "full") trails.renderTrails(tierColors);
-          constellation.renderLinks(starNodes, hoveredStarId);
+          // Keep the galaxy structure clean; straight constellation links conflict with spiral arms.
+          constellation.renderLinks([], null);
         });
 
         // ResizeObserver for dynamic crisp resolution without distortion
