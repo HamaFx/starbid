@@ -6,6 +6,7 @@ import { calculateGalaxyLayout } from "@/lib/math/galaxyLayout";
 import type { Star } from "@/lib/types";
 import type { Container } from "pixi.js";
 import type { OrbitTrails } from "@/components/galaxy/OrbitTrails";
+import { galaxyPointForStar } from "@/lib/math/galaxyLayout";
 
 export function useGalaxySpriteSync(
   stars: Star[],
@@ -22,7 +23,8 @@ export function useGalaxySpriteSync(
     if (!isReady || !container) return;
     const width = hostRef.current?.clientWidth || BASE_WIDTH;
     const height = hostRef.current?.clientHeight || BASE_HEIGHT;
-    const maxRadius = calculateGalaxyLayout(width, height, undefined, stars.length).maxRadius;
+    // Layout bounds are stable world coordinates; viewport size only affects rendering.
+    const maxRadius = calculateGalaxyLayout(width, height).maxRadius;
     const activeIds = new Set(stars.map((star) => star.id));
     const sprites = spritesRef.current;
 

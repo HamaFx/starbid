@@ -1,5 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 import { GalaxyViewport } from "@/components/galaxy/GalaxyViewport";
+import { buildSectorIndex, galaxySectorForPoint, nearbySectorKeys } from "@/lib/math/galaxySectors";
+import { clampTelemetryPosition } from "@/components/galaxy/GalaxyTelemetryOverlay";
 
 function viewport() {
   const world = {
@@ -11,6 +13,17 @@ function viewport() {
 }
 
 describe("GalaxyViewport", () => {
+  it("clamps telemetry cards to the viewport edges", () => {
+    expect(clampTelemetryPosition(0, 0, 800, 600).left).toBeGreaterThan(0);
+    expect(clampTelemetryPosition(800, 600, 800, 600).left).toBeLessThan(800);
+    expect(clampTelemetryPosition(400, 300, 800, 600).top).toBeLessThanOrEqual(600);
+  });
+
+  it("assigns deterministic sectors and nearby sector windows", () => {
+    expect(galaxySectorForPoint({ x: 999, y: 501 }, 500).key).toBe("1:1");
+    expect(nearbySectorKeys({ x: 0, y: 0, key: "0:0" }, 1)).toHaveLength(9);
+    expect(buildSectorIndex([{ x: 1, y: 1 }, { x: 501, y: 1 }], 500).size).toBe(2);
+  });
   it("focuses a world point at the viewport center", () => {
     const camera = viewport();
     camera.focusOn(100, 50, 2);
@@ -21,8 +34,19 @@ describe("GalaxyViewport", () => {
 
   it("automatically zooms out when the world grows beyond the viewport", () => {
     const camera = viewport();
-    camera.updateWorldRadius(1000);
-    expect(camera.targetScale).toBeLessThan(1);
+    camera.updateWorldRadius(1000, 4000, 2200);
+    expect(camera.minZoom).toBeLessThan(1);
+    expect(camera.targetScale).toBe(1);
+  });
+
+  it("clamps exploration panning to the persistent world bounds", () => {
+    const camera = viewport();
+    camera.updateWorldRadius(1000, 4000, 2200);
+    camera.targetX = 999999;
+    camera.targetY = -999999;
+    camera.tick(1);
+    expect(camera.targetX).toBeLessThan(999999);
+    expect(camera.targetY).toBeGreaterThan(-999999);
   });
 
   it("resets scale and pan", () => {

@@ -22,16 +22,18 @@ export class GalaxyViewport {
   public minZoom = 0.4;
   public maxZoom = 4.0;
   private worldRadius = 0;
+  private worldWidth = 0;
+  private worldHeight = 0;
 
-  public updateWorldRadius(radius: number) {
+  public updateWorldRadius(radius: number, worldWidth = radius * 2, worldHeight = radius * 2) {
     this.worldRadius = Math.max(0, radius);
-    const viewportRadius = Math.min(this.cx, this.cy);
-    const fitScale = this.worldRadius > 0 ? Math.min(1, viewportRadius / this.worldRadius) : 1;
-    if (this.targetScale > fitScale) {
-      this.targetScale = fitScale;
-      this.targetX = 0;
-      this.targetY = 0;
-    }
+    this.worldWidth = Math.max(0, worldWidth);
+    this.worldHeight = Math.max(0, worldHeight);
+    // Keep a deliberate overview scale. Never fit the camera to current stars.
+    const viewportWidth = Math.max(1, this.cx * 2);
+    const overviewScale = this.worldWidth > 0 ? Math.min(1, (viewportWidth * 0.34) / this.worldWidth) : 1;
+    this.minZoom = Math.min(this.minZoom, Math.max(0.08, overviewScale * 0.7));
+    if (this.targetScale < this.minZoom) this.targetScale = this.minZoom;
   }
 
   // Multi-touch pinch tracking
@@ -196,6 +198,18 @@ export class GalaxyViewport {
     this.vy = 0;
   }
 
+  public clampPan() {
+    if (!this.worldWidth || !this.worldHeight) return;
+    const halfViewportWidth = this.cx / Math.max(this.targetScale, 0.01);
+    const halfViewportHeight = this.cy / Math.max(this.targetScale, 0.01);
+    const minX = this.cx - this.worldWidth - halfViewportWidth;
+    const maxX = this.cx + halfViewportWidth;
+    const minY = this.cy - this.worldHeight - halfViewportHeight;
+    const maxY = this.cy + halfViewportHeight;
+    this.targetX = Math.min(maxX, Math.max(minX, this.targetX));
+    this.targetY = Math.min(maxY, Math.max(minY, this.targetY));
+  }
+
   public reset() {
     this.targetScale = this.defaultScale;
     this.targetX = 0;
@@ -213,6 +227,7 @@ export class GalaxyViewport {
       this.vy *= friction;
     }
 
+    this.clampPan();
     const ease = 0.16 * Math.min(delta, 2);
     this.scale += (this.targetScale - this.scale) * ease;
     this.x += (this.targetX - this.x) * ease;

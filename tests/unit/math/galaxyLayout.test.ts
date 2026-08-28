@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
 import {
   calculateGalaxyLayout,
+  GALAXY_WORLD_HEIGHT,
+  GALAXY_WORLD_WIDTH,
   compareStars,
   crowdScale,
   galaxyPopulationScale,
@@ -32,23 +34,32 @@ function star(id: string, bid: number, enteredAt: string, status: Star["status"]
 }
 
 describe("galaxy layout", () => {
+  it("keeps the world dimensions stable across viewport and population changes", () => {
+    const small = calculateGalaxyLayout(400, 300, undefined, 2);
+    const large = calculateGalaxyLayout(1600, 1000, undefined, 2000);
+    expect(small.worldWidth).toBe(GALAXY_WORLD_WIDTH);
+    expect(small.worldHeight).toBe(GALAXY_WORLD_HEIGHT);
+    expect(large.maxRadius).toBe(small.maxRadius);
+    expect(large.worldWidth).toBe(small.worldWidth);
+  });
+
   it("expands the galaxy as the population grows", () => {
     expect(galaxyPopulationScale(20)).toBe(1);
     expect(galaxyPopulationScale(80)).toBeGreaterThan(galaxyPopulationScale(20));
     expect(galaxyPopulationScale(10000)).toBe(3.2);
   });
 
-  it("fits the projected ellipse inside narrow and tall viewports", () => {
+  it("keeps the projected ellipse independent of narrow and tall viewports", () => {
     const layout = calculateGalaxyLayout(400, 700);
-    expect(layout.maxRadius).toBeLessThanOrEqual(400 * 0.9);
-    expect(layout.maxRadius * layout.yScale).toBeLessThanOrEqual(700 * 0.9);
+    expect(layout.maxRadius).toBe(6000);
+    expect(layout.maxRadius * layout.yScale).toBe(3250);
   });
 
   it("projects the center and cardinal points consistently", () => {
     const layout = calculateGalaxyLayout(1200, 760);
-    expect(orbitPoint(layout.cx, layout.cy, 100, 0)).toEqual({ x: 700, y: 380 });
+    expect(orbitPoint(layout.cx, layout.cy, 100, 0)).toEqual({ x: 6100, y: 3250 });
     expect(orbitPoint(layout.cx, layout.cy, 100, Math.PI / 2).y).toBeCloseTo(
-      layout.cy + 62,
+      layout.cy + 100 * layout.yScale,
     );
   });
 
@@ -79,12 +90,24 @@ describe("galaxy layout", () => {
     expect(Math.max(...radii)).toBeGreaterThan(300 * 0.7);
   });
 
+  it("keeps a star position stable when rank and population change", () => {
+    const input = { id: "stable-star", angleSeed: 20 };
+    const first = calculateGalaxyLayout(1200, 760);
+    const second = calculateGalaxyLayout(400, 900, undefined, 1000);
+    expect(galaxyRadiusForStar(input, 0, 2, first.maxRadius)).toBe(
+      galaxyRadiusForStar(input, 9, 100, second.maxRadius),
+    );
+    expect(spiralAngleForStar(input, 0, 150, first.maxRadius)).toBe(
+      spiralAngleForStar(input, 9, 150, second.maxRadius),
+    );
+  });
+
   it("places the same star deterministically on a spiral arm", () => {
     const input = { id: "star-a", angleSeed: 20 };
     expect(spiralAngleForStar(input, 2, 150, 300)).toBe(
       spiralAngleForStar(input, 2, 150, 300),
     );
-    expect(spiralAngleForStar(input, 2, 150, 300)).not.toBe(
+    expect(spiralAngleForStar(input, 2, 150, 300)).toBe(
       spiralAngleForStar(input, 3, 150, 300),
     );
   });

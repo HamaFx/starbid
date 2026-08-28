@@ -1,6 +1,6 @@
 import { Container, Graphics, Text } from "pixi.js";
 import { angularVelocity } from "@/lib/math/orbit";
-import { orbitPoint, GALAXY_Y_SCALE, rankOrbitRadius, spiralAngleForStar, starSizeForRank } from "@/lib/math/galaxyLayout";
+import { orbitPoint, GALAXY_Y_SCALE, galaxyRadiusForStar, spiralAngleForStar, starSizeForRank } from "@/lib/math/galaxyLayout";
 import type { Star } from "@/lib/types";
 
 export class StarSprite {
@@ -10,6 +10,7 @@ export class StarSprite {
   public targetRadius: number;
   public currentAngle: number;
   public starSize: number;
+  public targetStarSize: number;
   public rank: number;
   private graphic: Graphics;
   private label: Text;
@@ -51,10 +52,11 @@ export class StarSprite {
       this.onHover(null, 0, 0);
     });
 
-    this.targetRadius = rankOrbitRadius(star, rank, population.length, maxRadius);
+    this.targetRadius = galaxyRadiusForStar(star, rank, population.length, maxRadius);
     this.currentRadius = this.targetRadius;
     this.currentAngle = spiralAngleForStar(star, rank, this.currentRadius, maxRadius);
     this.starSize = this.calculateStarSize();
+    this.targetStarSize = this.starSize;
 
     this.graphic = new Graphics();
     this.container.addChild(this.graphic);
@@ -98,8 +100,8 @@ export class StarSprite {
     this.rank = rank;
     this.maxRadius = maxRadius;
     this.population = population;
-    this.targetRadius = rankOrbitRadius(star, rank, population.length, maxRadius);
-    this.starSize = this.calculateStarSize();
+    this.targetRadius = galaxyRadiusForStar(star, rank, population.length, maxRadius);
+    this.targetStarSize = this.calculateStarSize();
     this.label.text = this.getLabelText();
     this.label.style.fill = this.getStarColor();
     this.label.style.fontSize = this.rank === 0 ? 10 : 8.5;
@@ -109,12 +111,13 @@ export class StarSprite {
 
   public updatePopulation(population: Pick<Star, "totalBidCents">[]) {
     this.population = population;
-    this.targetRadius = rankOrbitRadius(this.star, this.rank, population.length, this.maxRadius);
+    this.targetRadius = galaxyRadiusForStar(this.star, this.rank, population.length, this.maxRadius);
+    this.targetStarSize = this.calculateStarSize();
   }
 
   public updateLayout(maxRadius: number) {
     this.maxRadius = maxRadius;
-    this.targetRadius = rankOrbitRadius(this.star, this.rank, this.population.length, maxRadius);
+    this.targetRadius = galaxyRadiusForStar(this.star, this.rank, this.population.length, maxRadius);
   }
 
   public getWorldPosition() {
@@ -198,6 +201,8 @@ export class StarSprite {
   public tick(delta: number, cx: number, cy: number): { x: number; y: number } {
     const ease = 0.045 * Math.min(delta, 2);
     this.currentRadius += (this.targetRadius - this.currentRadius) * ease;
+    this.starSize += (this.targetStarSize - this.starSize) * Math.min(1, ease * 2);
+    this.label.position.set(0, this.starSize + 4);
 
     const speed = angularVelocity(Math.max(10, this.currentRadius), 28);
     this.currentAngle += speed * 0.00012 * delta;

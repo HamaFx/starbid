@@ -10,6 +10,7 @@ import type { FilterTier } from "@/components/galaxy/ObservatoryHUD";
 import type { StarSprite } from "@/components/galaxy/StarSprite";
 import { calculateGalaxyLayout } from "@/lib/math/galaxyLayout";
 import { Lensing } from "@/components/galaxy/Lensing";
+import { AmbientGalaxy } from "@/components/galaxy/AmbientGalaxy";
 
 export const BASE_WIDTH = 1200;
 export const BASE_HEIGHT = 760;
@@ -32,6 +33,7 @@ export function useGalaxyScene(
   const shockwavesRef = useRef<ShockwaveSystem | null>(null);
   const constellationRef = useRef<ConstellationWeb | null>(null);
   const lensingRef = useRef<Lensing | null>(null);
+  const ambientRef = useRef<AmbientGalaxy | null>(null);
   const starContainerRef = useRef<Container | null>(null);
   const populationRef = useRef(20);
   const leaderRef = useRef(leader);
@@ -96,7 +98,11 @@ export function useGalaxyScene(
         const viewport = new GalaxyViewport(world, cx, cy, 1.0);
         viewportRef.current = viewport;
 
-        // Layer 1: Coordinate Grid & Screen-filling Accretion Guides
+        // Layer 1: Persistent ambient galaxy field and accretion guides
+        const ambient = new AmbientGalaxy(maxRadius);
+        ambientRef.current = ambient;
+        world.addChild(ambient.container);
+
         const guidesContainer = new Container();
         guidesContainer.addChild(drawAccretionGuides(cx, cy, maxRadius));
         world.addChild(guidesContainer);
@@ -187,7 +193,7 @@ export function useGalaxyScene(
               cy = layout.cy;
               maxRadius = layout.maxRadius;
               viewport.updateCenter(cx, cy, 1.0);
-              viewport.updateWorldRadius(maxRadius);
+              viewport.updateWorldRadius(maxRadius, layout.width, layout.height);
               trails.clear();
               const population = Array.from(sprites ?? [], ([, sprite]) => sprite.star);
               sprites?.forEach((sprite) => {
@@ -274,6 +280,8 @@ export function useGalaxyScene(
       shockwavesRef.current?.destroy();
       constellationRef.current?.destroy();
       lensingRef.current?.destroy();
+      ambientRef.current?.destroy();
+      ambientRef.current = null;
       starContainerRef.current = null;
       app.destroy(true, { children: true });
     };
@@ -314,7 +322,7 @@ export function useGalaxyScene(
     const host = hostRef.current;
     if (!viewport || !host) return;
     const nextLayout = calculateGalaxyLayout(host.clientWidth || BASE_WIDTH, host.clientHeight || BASE_HEIGHT, undefined, populationRef.current);
-    viewport.updateWorldRadius?.(nextLayout.maxRadius);
+    viewport.updateWorldRadius?.(nextLayout.maxRadius, nextLayout.worldWidth, nextLayout.worldHeight);
   }, [hostRef, leader, onSelectLeader, viewportRef]);
 
   const resetCamera = useCallback(() => viewportRef.current?.reset(), [viewportRef]);

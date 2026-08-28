@@ -1,6 +1,11 @@
 import type { Star } from "@/lib/types";
 
-export const GALAXY_Y_SCALE = 0.62;
+/** Stable world dimensions; these never resize with the viewport or population. */
+export const GALAXY_WORLD_WIDTH = 12000;
+export const GALAXY_WORLD_HEIGHT = 6500;
+export const GALAXY_WORLD_RADIUS = GALAXY_WORLD_WIDTH / 2;
+export const GALAXY_CAMERA_PADDING = 900;
+export const GALAXY_Y_SCALE = GALAXY_WORLD_HEIGHT / GALAXY_WORLD_WIDTH;
 export const GALAXY_HORIZONTAL_MARGIN = 0.9;
 export const GALAXY_VERTICAL_MARGIN = 0.9;
 export const GALAXY_MIN_ORBIT_RATIO = 0.16;
@@ -20,6 +25,9 @@ export type GalaxyLayout = {
   cy: number;
   maxRadius: number;
   yScale: number;
+  worldWidth: number;
+  worldHeight: number;
+  cameraBounds: { minX: number; maxX: number; minY: number; maxY: number };
 };
 
 export type GalaxyPoint = {
@@ -44,21 +52,29 @@ export function calculateGalaxyLayout(
   const safeWidth = Math.max(0, width);
   const safeHeight = Math.max(0, height);
   const safeYScale = Math.max(Number.EPSILON, yScale);
-  const populationScale = galaxyPopulationScale(starCount);
-  const fittedRadius = Math.min(
-    safeWidth * GALAXY_HORIZONTAL_MARGIN,
-    (safeHeight * GALAXY_VERTICAL_MARGIN) / safeYScale,
-  );
-  // Population increases visual density, not the physical scene bounds.
-  const maxRadius = fittedRadius * Math.min(populationScale, GALAXY_MAX_POPULATION_SCALE);
+  // The scene is a persistent world. Viewport dimensions affect only the
+  // screen container; they must never resize or re-layout the galaxy.
+  const worldWidth = GALAXY_WORLD_WIDTH;
+  const worldHeight = GALAXY_WORLD_HEIGHT;
+  const maxRadius = GALAXY_WORLD_RADIUS;
+  const cx = worldWidth / 2;
+  const cy = worldHeight / 2;
 
   return {
     width: safeWidth,
     height: safeHeight,
-    cx: safeWidth / 2,
-    cy: safeHeight / 2,
+    cx,
+    cy,
     maxRadius,
     yScale: safeYScale,
+    worldWidth,
+    worldHeight,
+    cameraBounds: {
+      minX: -GALAXY_CAMERA_PADDING,
+      maxX: worldWidth + GALAXY_CAMERA_PADDING,
+      minY: -GALAXY_CAMERA_PADDING,
+      maxY: worldHeight + GALAXY_CAMERA_PADDING,
+    },
   };
 }
 
@@ -116,28 +132,28 @@ export function spiralAngleForStar(
   maxRadius: number,
 ): number {
   const radial = Math.min(1, Math.max(0, radius / Math.max(1, maxRadius)));
-  const arm = ((rank % GALAXY_SPIRAL_ARMS) / GALAXY_SPIRAL_ARMS) * Math.PI * 2;
+  const arm = (Math.floor(hashToUnit(`${star.id}:arm`) * GALAXY_SPIRAL_ARMS) / GALAXY_SPIRAL_ARMS) * Math.PI * 2;
   const seed = star.angleSeed * Math.PI / 180 + hashToUnit(star.id) * Math.PI * 2;
   const armAngle = arm + radial * GALAXY_SPIRAL_TWIST;
   const jitter = (hashToUnit(`${star.id}:jitter`) - 0.5) * GALAXY_ARM_WIDTH * (1.2 - radial * 0.35);
   return armAngle + seed * 0.12 + jitter;
 }
 
-export function rankOrbitRadius(
+export function galaxyRadiusForStar(
   star: Pick<Star, "id">,
-  rank: number,
-  starCount: number,
+  _rank: number,
+  _starCount: number,
   maxRadius: number,
 ): number {
-  const normalizedRank = starCount <= 1 ? 0.5 : rank / (starCount - 1);
   const seed = hashToUnit(`${star.id}:radius`);
-  const minimum = GALAXY_SINGULARITY_EXCLUSION_RATIO + 0.08;
-  const bulge = minimum + normalizedRank * (1 - minimum);
-  return maxRadius * Math.min(0.96, Math.max(minimum, bulge * 0.82 + seed * 0.18));
+  const minimum = GALAXY_SINGULARITY_EXCLUSION_RATIO;
+  const radial = minimum + Math.pow(seed, 0.68) * (0.94 - minimum);
+  return maxRadius * radial;
 }
 
-/** @deprecated Use rankOrbitRadius for explicit rank-based geometry. */
-export const galaxyRadiusForStar = rankOrbitRadius;
+/** @deprecated Use galaxyRadiusForStar; rank is intentionally not spatial. */
+export const rankOrbitRadius = galaxyRadiusForStar;
+
 
 export function starSizeForRank(rank: number, starCount: number, bidCents: number): number {
   const crowd = crowdScale(starCount);
@@ -154,8 +170,8 @@ export function galaxyPointForStar(
   cx = 0,
   cy = 0,
 ): GalaxyPoint {
-  const radius = rankOrbitRadius(star, rank, starCount, maxRadius);
-  return orbitPoint(cx, cy, radius, spiralAngleForStar(star, rank, radius, maxRadius));
+  const radius = galaxyRadiusForStar(star, rank, starCount, maxRadius);
+  return orbitPoint(cx, cy, radius, spiralAngleForStar(star, rank, radius, maxRadius), GALAXY_Y_SCALE);
 } 
 
 export function spiralArmPoint(
