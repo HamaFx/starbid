@@ -2,17 +2,15 @@ function clamp(value: number, min: number, max: number): number {
   return Math.min(Math.max(value, min), max);
 }
 
-export const GALAXY_MAX_RADIUS = 1800;
-
-export function radius(totalBidDollars: number, rMax = GALAXY_MAX_RADIUS): number {
+export function radius(totalBidDollars: number, rMax: number): number {
   if (totalBidDollars < 0 || rMax < 0) {
     throw new Error("Orbit inputs must be non-negative");
   }
 
-  // Deep-space logarithmic radial distribution with massive capacity for hundreds of stars
-  const minRadius = rMax * 0.08;
-  const maxSpan = rMax * 0.88;
-  const decay = 1 / (1 + 0.32 * Math.log1p(totalBidDollars));
+  // Balanced radial distribution spanning 14% to 96% of the screen-filling galaxy
+  const minRadius = rMax * 0.14;
+  const maxSpan = rMax * 0.82;
+  const decay = 1 / (1 + 0.35 * Math.log1p(totalBidDollars));
   return minRadius + maxSpan * decay;
 }
 

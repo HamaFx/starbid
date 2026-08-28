@@ -2,9 +2,9 @@ import { Container } from "pixi.js";
 
 export class GalaxyViewport {
   public world: Container;
-  public scale = 0.45;
-  public targetScale = 0.45;
-  public defaultScale = 0.45;
+  public scale = 1.0;
+  public targetScale = 1.0;
+  public defaultScale = 1.0;
   public x = 0;
   public y = 0;
   public targetX = 0;
@@ -19,15 +19,15 @@ export class GalaxyViewport {
   private lastDragY = 0;
   private vx = 0;
   private vy = 0;
-  public minZoom = 0.12;
-  public maxZoom = 4.5;
+  public minZoom = 0.4;
+  public maxZoom = 4.0;
 
   // Multi-touch pinch tracking
   private activePointers = new Map<number, { x: number; y: number }>();
   private initialPinchDist = 0;
-  private initialPinchScale = 0.45;
+  private initialPinchScale = 1.0;
 
-  constructor(world: Container, cx: number, cy: number, defaultScale = 0.45) {
+  constructor(world: Container, cx: number, cy: number, defaultScale = 1.0) {
     this.world = world;
     this.cx = cx;
     this.cy = cy;
@@ -41,13 +41,11 @@ export class GalaxyViewport {
     this.world.scale.set(defaultScale);
   }
 
-  public updateCenter(cx: number, cy: number, defaultScale?: number) {
+  public updateCenter(cx: number, cy: number, defaultScale = 1.0) {
     this.cx = cx;
     this.cy = cy;
+    this.defaultScale = defaultScale;
     this.world.pivot.set(cx, cy);
-    if (defaultScale !== undefined) {
-      this.defaultScale = defaultScale;
-    }
   }
 
   /**
@@ -146,13 +144,13 @@ export class GalaxyViewport {
   }
 
   /**
-   * Double-click/double-tap to toggle between zoomed sector view and cosmic overview
+   * Double-click/double-tap to toggle between zoomed sector view and full screen overview
    */
   public onDoubleTap(mouseX: number, mouseY: number) {
-    if (this.targetScale > this.defaultScale * 1.5) {
+    if (this.targetScale > 1.4) {
       this.reset();
     } else {
-      const newTarget = this.defaultScale * 2.5;
+      const newTarget = 2.2;
       const wx = (mouseX - this.cx - this.targetX) / this.targetScale;
       const wy = (mouseY - this.cy - this.targetY) / this.targetScale;
 
@@ -163,15 +161,15 @@ export class GalaxyViewport {
   }
 
   public zoomIn() {
-    this.targetScale = Math.min(this.maxZoom, this.targetScale * 1.3);
+    this.targetScale = Math.min(this.maxZoom, this.targetScale * 1.25);
   }
 
   public zoomOut() {
-    this.targetScale = Math.max(this.minZoom, this.targetScale * 0.75);
+    this.targetScale = Math.max(this.minZoom, this.targetScale * 0.8);
   }
 
-  public focusOn(targetWorldX: number, targetWorldY: number, zoomMultiplier = 2.0) {
-    this.targetScale = Math.min(this.maxZoom, this.defaultScale * zoomMultiplier);
+  public focusOn(targetWorldX: number, targetWorldY: number, zoom = 1.8) {
+    this.targetScale = Math.min(this.maxZoom, Math.max(this.minZoom, zoom));
     this.targetX = (this.cx - targetWorldX) * this.targetScale;
     this.targetY = (this.cy - targetWorldY) * this.targetScale;
     this.vx = 0;
