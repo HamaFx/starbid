@@ -67,7 +67,7 @@ export class GalaxyViewport {
    * Cursor-anchored smooth wheel & trackpad pinch zooming
    */
   public onWheel(deltaY: number, mouseX: number, mouseY: number, isPinch = false) {
-    const zoomStep = isPinch ? Math.exp(-deltaY * 0.015) : deltaY < 0 ? 1.15 : 0.87;
+    const zoomStep = isPinch ? Math.exp(-deltaY * 0.008) : Math.exp(-Math.sign(deltaY || 1) * 0.12);
     const newTarget = Math.max(this.minZoom, Math.min(this.maxZoom, this.targetScale * zoomStep));
     if (newTarget === this.targetScale) return;
 
@@ -83,13 +83,14 @@ export class GalaxyViewport {
   /**
    * Pointer down handling with multi-touch pinch support
    */
-  public onPointerDown(e: PointerEvent) {
-    this.activePointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+  public onPointerDown(e: PointerEvent, canvasRect?: DOMRect) {
+    const point = this.localPoint(e.clientX, e.clientY, canvasRect);
+    this.activePointers.set(e.pointerId, point);
 
     if (this.activePointers.size === 1) {
       this.isDragging = true;
-      this.lastDragX = e.clientX;
-      this.lastDragY = e.clientY;
+      this.lastDragX = point.x;
+      this.lastDragY = point.y;
       this.vx = 0;
       this.vy = 0;
     } else if (this.activePointers.size === 2) {
@@ -109,7 +110,8 @@ export class GalaxyViewport {
    */
   public onPointerMove(e: PointerEvent, canvasRect: DOMRect) {
     if (!this.activePointers.has(e.pointerId)) return;
-    this.activePointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+    const point = this.localPoint(e.clientX, e.clientY, canvasRect);
+    this.activePointers.set(e.pointerId, point);
 
     if (this.activePointers.size === 2) {
       const pts = Array.from(this.activePointers.values());
@@ -136,10 +138,10 @@ export class GalaxyViewport {
     }
 
     if (this.isDragging && this.activePointers.size === 1) {
-      const dx = e.clientX - this.lastDragX;
-      const dy = e.clientY - this.lastDragY;
-      this.lastDragX = e.clientX;
-      this.lastDragY = e.clientY;
+      const dx = point.x - this.lastDragX;
+      const dy = point.y - this.lastDragY;
+      this.lastDragX = point.x;
+      this.lastDragY = point.y;
 
       this.targetX += dx;
       this.targetY += dy;
@@ -168,6 +170,18 @@ export class GalaxyViewport {
   /**
    * Double-click/double-tap to toggle between zoomed sector view and full screen overview
    */
+  public cancelPointers() {
+    this.activePointers.clear();
+    this.isDragging = false;
+    this.initialPinchDist = 0;
+    this.vx = 0;
+    this.vy = 0;
+  }
+
+  private localPoint(clientX: number, clientY: number, rect?: DOMRect) {
+    return { x: rect ? clientX - rect.left : clientX, y: rect ? clientY - rect.top : clientY };
+  }
+
   public onDoubleTap(mouseX: number, mouseY: number) {
     if (this.targetScale > 1.4) {
       this.reset();

@@ -225,7 +225,7 @@ export function useGalaxyScene(
         };
 
         onPointerDown = (e: PointerEvent) => {
-          viewport.onPointerDown(e);
+          viewport.onPointerDown(e, app.canvas.getBoundingClientRect());
         };
 
         onPointerMove = (e: PointerEvent) => {
@@ -254,6 +254,7 @@ export function useGalaxyScene(
         window.addEventListener("pointermove", onPointerMove);
         window.addEventListener("pointerup", onPointerUp);
         window.addEventListener("pointercancel", onPointerUp);
+        window.addEventListener("blur", () => viewport.cancelPointers());
         app.canvas.addEventListener("dblclick", onDblClick);
 
         setIsReady(true);

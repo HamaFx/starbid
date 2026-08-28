@@ -58,6 +58,15 @@ describe("GalaxyViewport", () => {
     expect(camera.targetY).toBe(0);
   });
 
+  it("uses canvas-local coordinates for pointer dragging", () => {
+    const camera = viewport();
+    const rect = { left: 100, top: 50 } as DOMRect;
+    camera.onPointerDown({ pointerId: 1, clientX: 150, clientY: 90 } as PointerEvent, rect);
+    camera.onPointerMove({ pointerId: 1, clientX: 170, clientY: 100 } as PointerEvent, rect);
+    expect(camera.targetX).toBe(20);
+    expect(camera.targetY).toBe(10);
+  });
+
   it("keeps the cursor world point anchored during wheel zoom", () => {
     const camera = viewport();
     camera.onWheel(-1, 250, 120);
