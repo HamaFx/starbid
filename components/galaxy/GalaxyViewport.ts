@@ -60,7 +60,7 @@ export class GalaxyViewport {
     this.cx = cx;
     this.cy = cy;
     this.defaultScale = defaultScale;
-    this.world.pivot.set(cx, cy);
+    this.world.position.set(cx, cy);
   }
 
   /**

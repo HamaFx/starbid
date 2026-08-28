@@ -91,12 +91,15 @@ export function useGalaxyScene(
         app.canvas.style.touchAction = "none";
 
         populationRef.current = sprites?.size ?? 20;
-        let { cx, cy, maxRadius } = calculateGalaxyLayout(initialWidth, initialHeight, undefined, populationRef.current);
+        let { cx, cy, maxRadius, worldWidth, worldHeight } = calculateGalaxyLayout(initialWidth, initialHeight, undefined, populationRef.current);
 
         const world = new Container();
         app.stage.addChild(world);
-        const viewport = new GalaxyViewport(world, cx, cy, 1.0);
+        // Render the persistent world into the actual canvas viewport. Layout
+        // coordinates remain world-space; the viewport center is screen-space.
+        const viewport = new GalaxyViewport(world, initialWidth / 2, initialHeight / 2, Math.min(initialWidth / worldWidth, initialHeight / worldHeight) * 0.9);
         viewportRef.current = viewport;
+        viewport.updateWorldRadius(maxRadius, worldWidth, worldHeight);
 
         // Layer 1: Persistent ambient galaxy field and accretion guides
         const ambient = new AmbientGalaxy(maxRadius);
@@ -186,13 +189,11 @@ export function useGalaxyScene(
             const { width, height } = entry.contentRect;
             if (width > 50 && height > 50) {
               app.renderer.resize(width, height);
-              cx = width / 2;
-              cy = height / 2;
               const layout = calculateGalaxyLayout(width, height, undefined, populationRef.current);
               cx = layout.cx;
               cy = layout.cy;
               maxRadius = layout.maxRadius;
-              viewport.updateCenter(cx, cy, 1.0);
+              viewport.updateCenter(width / 2, height / 2, Math.min(width / layout.worldWidth, height / layout.worldHeight) * 0.9);
               viewport.updateWorldRadius(maxRadius, layout.width, layout.height);
               trails.clear();
               const population = Array.from(sprites ?? [], ([, sprite]) => sprite.star);
