@@ -3,7 +3,9 @@ import {
   calculateGalaxyLayout,
   compareStars,
   crowdScale,
+  galaxyPopulationScale,
   galaxyRadiusForStar,
+  starSizeForRank,
   orbitPoint,
   orbitRadiusForStar,
   spiralAngleForStar,
@@ -30,6 +32,12 @@ function star(id: string, bid: number, enteredAt: string, status: Star["status"]
 }
 
 describe("galaxy layout", () => {
+  it("expands the galaxy as the population grows", () => {
+    expect(galaxyPopulationScale(20)).toBe(1);
+    expect(galaxyPopulationScale(80)).toBeGreaterThan(galaxyPopulationScale(20));
+    expect(galaxyPopulationScale(10000)).toBe(3.2);
+  });
+
   it("fits the projected ellipse inside narrow and tall viewports", () => {
     const layout = calculateGalaxyLayout(400, 700);
     expect(layout.maxRadius).toBeLessThanOrEqual(400 * 0.9);
@@ -52,6 +60,16 @@ describe("galaxy layout", () => {
     const radii = population.map((item) => orbitRadiusForStar(item, population, 300));
     expect(new Set(radii).size).toBeGreaterThan(2);
     expect(radii.every((value) => value >= 300 * 0.16 && value <= 300 * 0.99)).toBe(true);
+  });
+
+  it("keeps orbiting stars outside the central singularity", () => {
+    expect(galaxyRadiusForStar({ id: "rank-two" }, 1, 20, 300)).toBeGreaterThan(300 * 0.14);
+  });
+
+  it("gives the top ten distinct visual size tiers", () => {
+    expect(starSizeForRank(1, 20, 100)).toBeGreaterThan(starSizeForRank(4, 20, 100));
+    expect(starSizeForRank(4, 20, 100)).toBeGreaterThan(starSizeForRank(8, 20, 100));
+    expect(starSizeForRank(8, 20, 100)).toBeGreaterThan(starSizeForRank(11, 20, 100));
   });
 
   it("places stars across the full disk independently of bid amount", () => {

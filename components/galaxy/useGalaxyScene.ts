@@ -24,6 +24,8 @@ export function useGalaxyScene(
   filterTier: FilterTier = "all",
   searchQuery = "",
   lod: "full" | "reduced" = "full",
+  leader: { name: string; totalBidCents: number } | undefined = undefined,
+  onSelectLeader?: () => void,
 ) {
   const [currentZoom, setCurrentZoom] = useState(1);
   const [isReady, setIsReady] = useState(false);
@@ -31,6 +33,8 @@ export function useGalaxyScene(
   const constellationRef = useRef<ConstellationWeb | null>(null);
   const lensingRef = useRef<Lensing | null>(null);
   const starContainerRef = useRef<Container | null>(null);
+  const populationRef = useRef(20);
+  const leaderRef = useRef(leader);
 
   const triggerShockwave = useCallback(
     (x: number, y: number, type: "spawn" | "fuel" | "singularity_takeover" | "click") => {
@@ -81,7 +85,8 @@ export function useGalaxyScene(
         app.canvas.style.display = "block";
         app.canvas.style.touchAction = "none";
 
-        let { cx, cy, maxRadius } = calculateGalaxyLayout(initialWidth, initialHeight);
+        populationRef.current = sprites?.size ?? 20;
+        let { cx, cy, maxRadius } = calculateGalaxyLayout(initialWidth, initialHeight, undefined, populationRef.current);
 
         const world = new Container();
         app.stage.addChild(world);
@@ -105,7 +110,7 @@ export function useGalaxyScene(
 
         // Layer 5: Singularity Core & Photon Sphere
         const coreContainer = new Container();
-        coreContainer.addChild(drawSingularityCore(cx, cy));
+        coreContainer.addChild(drawSingularityCore(cx, cy, leaderRef.current, onSelectLeader, undefined));
         world.addChild(coreContainer);
 
         const lensing = new Lensing();
@@ -145,7 +150,7 @@ export function useGalaxyScene(
 
           sprites?.forEach((sprite, id) => {
             const pt = sprite.tick(animationDelta, cx, cy);
-            if (lod === "full" && sprite.rank < 30) trails.recordPoint(id, pt.x, pt.y);
+            if (lod === "full" && populationRef.current < 100 && sprite.rank < 30) trails.recordPoint(id, pt.x, pt.y);
 
             const color =
               sprite.rank === 0
@@ -174,7 +179,7 @@ export function useGalaxyScene(
               app.renderer.resize(width, height);
               cx = width / 2;
               cy = height / 2;
-              const layout = calculateGalaxyLayout(width, height);
+              const layout = calculateGalaxyLayout(width, height, undefined, populationRef.current);
               cx = layout.cx;
               cy = layout.cy;
               maxRadius = layout.maxRadius;
@@ -190,7 +195,7 @@ export function useGalaxyScene(
               guidesContainer.addChild(drawAccretionGuides(cx, cy, maxRadius));
 
               coreContainer.removeChildren();
-              coreContainer.addChild(drawSingularityCore(cx, cy));
+              coreContainer.addChild(drawSingularityCore(cx, cy, leaderRef.current, onSelectLeader, undefined));
             }
           }
         });
@@ -255,7 +260,7 @@ export function useGalaxyScene(
       starContainerRef.current = null;
       app.destroy(true, { children: true });
     };
-  }, [hostRef, spritesRef, trailsRef, viewportRef, pausedRef, speedRef, lod]);
+  }, [hostRef, spritesRef, trailsRef, viewportRef, pausedRef, speedRef, lod, leader, onSelectLeader]);
 
   // Update filter highlights on sprites
   useEffect(() => {
@@ -281,6 +286,19 @@ export function useGalaxyScene(
     });
   }, [spritesRef, filterTier, searchQuery]);
 
+  const updatePopulation = useCallback((population: number) => {
+    populationRef.current = Math.max(1, population);
+  }, []);
+
+  useEffect(() => {
+    leaderRef.current = leader;
+    const viewport = viewportRef.current;
+    const host = hostRef.current;
+    if (!viewport || !host) return;
+    const nextLayout = calculateGalaxyLayout(host.clientWidth || BASE_WIDTH, host.clientHeight || BASE_HEIGHT, undefined, populationRef.current);
+    viewport.updateWorldRadius?.(nextLayout.maxRadius);
+  }, [hostRef, leader, viewportRef]);
+
   const resetCamera = useCallback(() => viewportRef.current?.reset(), [viewportRef]);
   const focusCameraOn = useCallback(
     (starId: string, zoom = 1.8) => {
@@ -291,5 +309,5 @@ export function useGalaxyScene(
     [spritesRef, viewportRef],
   );
 
-  return { currentZoom, triggerShockwave, isReady, starContainerRef, resetCamera, focusCameraOn };
+  return { currentZoom, triggerShockwave, isReady, starContainerRef, resetCamera, focusCameraOn, updatePopulation };
 }

@@ -9,6 +9,9 @@ export const GALAXY_SPIRAL_ARMS = 4;
 export const GALAXY_SPIRAL_TWIST = 2.8;
 export const GALAXY_ARM_WIDTH = 0.24;
 export const GALAXY_BULGE_RATIO = 0.22;
+export const GALAXY_SINGULARITY_EXCLUSION_RATIO = 0.14;
+export const GALAXY_BASE_POPULATION = 20;
+export const GALAXY_MAX_POPULATION_SCALE = 3.2;
 
 export type GalaxyLayout = {
   width: number;
@@ -24,18 +27,28 @@ export type GalaxyPoint = {
   y: number;
 };
 
+export function galaxyPopulationScale(starCount: number): number {
+  const safeCount = Math.max(1, starCount);
+  return Math.min(
+    GALAXY_MAX_POPULATION_SCALE,
+    Math.max(1, Math.sqrt(safeCount / GALAXY_BASE_POPULATION)),
+  );
+}
+
 export function calculateGalaxyLayout(
   width: number,
   height: number,
   yScale = GALAXY_Y_SCALE,
+  starCount = GALAXY_BASE_POPULATION,
 ): GalaxyLayout {
   const safeWidth = Math.max(0, width);
   const safeHeight = Math.max(0, height);
   const safeYScale = Math.max(Number.EPSILON, yScale);
+  const populationScale = galaxyPopulationScale(starCount);
   const maxRadius = Math.min(
     safeWidth * GALAXY_HORIZONTAL_MARGIN,
     (safeHeight * GALAXY_VERTICAL_MARGIN) / safeYScale,
-  );
+  ) * populationScale;
 
   return {
     width: safeWidth,
@@ -116,8 +129,16 @@ export function galaxyRadiusForStar(
 ): number {
   const normalizedRank = starCount <= 1 ? 0.5 : rank / (starCount - 1);
   const seed = hashToUnit(`${star.id}:radius`);
-  const bulge = GALAXY_BULGE_RATIO + normalizedRank * (1 - GALAXY_BULGE_RATIO);
-  return maxRadius * Math.min(0.96, Math.max(0.08, bulge * 0.82 + seed * 0.18));
+  const minimum = GALAXY_SINGULARITY_EXCLUSION_RATIO + 0.08;
+  const bulge = minimum + normalizedRank * (1 - minimum);
+  return maxRadius * Math.min(0.96, Math.max(minimum, bulge * 0.82 + seed * 0.18));
+}
+
+export function starSizeForRank(rank: number, starCount: number, bidCents: number): number {
+  const crowd = crowdScale(starCount);
+  const bidInfluence = Math.min(2, Math.max(0, Math.log1p(Math.max(0, bidCents) / 100) * 0.16));
+  const tier = rank === 0 ? 18 : rank <= 3 ? 12 : rank <= 6 ? 9 : rank <= 10 ? 7 : 5;
+  return (tier + bidInfluence) * crowd;
 }
 
 export function galaxyPointForStar(

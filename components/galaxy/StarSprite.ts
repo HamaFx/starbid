@@ -1,6 +1,6 @@
 import { Container, Graphics, Text } from "pixi.js";
 import { angularVelocity } from "@/lib/math/orbit";
-import { orbitPoint, GALAXY_Y_SCALE, crowdScale, galaxyRadiusForStar, spiralAngleForStar } from "@/lib/math/galaxyLayout";
+import { orbitPoint, GALAXY_Y_SCALE, galaxyRadiusForStar, spiralAngleForStar, starSizeForRank } from "@/lib/math/galaxyLayout";
 import type { Star } from "@/lib/types";
 
 export class StarSprite {
@@ -82,9 +82,7 @@ export class StarSprite {
   }
 
   private calculateStarSize(): number {
-    const bidSize = Math.min(10, Math.max(4.5, 4.5 + Math.log1p(this.star.totalBidCents / 100) * 0.8));
-    const rankBoost = this.rank === 0 ? 2 : this.rank < 3 ? 1 : 0;
-    return (bidSize + rankBoost) * crowdScale(this.population.length);
+    return starSizeForRank(this.rank, this.population.length, this.star.totalBidCents);
   }
 
   private getStarColor(): number {
@@ -134,6 +132,7 @@ export class StarSprite {
   public redraw() {
     this.graphic.clear();
     const isTop = this.rank === 0;
+    const isElite = this.rank > 0 && this.rank <= 10;
     const isPhoton = this.rank > 0 && this.rank < 3;
     const isInner = this.rank >= 3 && this.rank < 7;
     const color = this.getStarColor();
@@ -147,8 +146,8 @@ export class StarSprite {
     }
 
     // Diffraction Spikes for top stars
-    if ((isTop || isPhoton || this.isHovered) && !this.isDimmed) {
-      const spikeLen = baseSize * (isTop ? 2.5 : 1.8);
+    if ((isTop || isElite || this.isHovered) && !this.isDimmed) {
+      const spikeLen = baseSize * (isTop ? 2.5 : this.rank <= 3 ? 2 : 1.45);
       this.graphic
         .moveTo(-spikeLen, 0)
         .lineTo(spikeLen, 0)
@@ -164,7 +163,7 @@ export class StarSprite {
       if (isTop) {
         this.graphic.circle(0, 0, baseSize + 6).stroke({ color: 0x38bdf8, alpha: 0.55, width: 1.5 });
         this.graphic.circle(0, 0, baseSize + 3).stroke({ color: 0xfbbf24, alpha: 0.7, width: 1.2 });
-      } else if (isPhoton || isInner) {
+      } else if (isPhoton || isInner || isElite) {
         this.graphic.circle(0, 0, baseSize + 4).stroke({ color, alpha: 0.5, width: 1.1 });
       } else {
         this.graphic.circle(0, 0, baseSize + 2.5).stroke({ color, alpha: 0.38, width: 0.8 });
@@ -188,9 +187,9 @@ export class StarSprite {
     });
 
     // Clean label visibility: show top 3 by default, and show any on hover/focus
-    const showLabel = this.rank < 3 || this.isHovered || this.isFocused;
+    const showLabel = this.rank > 0 && this.rank <= 10 || this.isHovered || this.isFocused;
     this.label.visible = (showLabel || this.star.isDemo) && !this.isDimmed;
-    this.label.alpha = (this.isHovered ? 1.0 : this.rank === 0 ? 0.95 : 0.75) * alphaMultiplier;
+    this.label.alpha = (this.isHovered ? 1.0 : this.rank <= 3 ? 0.95 : 0.8) * alphaMultiplier;
     this.label.position.set(0, baseSize + 4);
   }
 

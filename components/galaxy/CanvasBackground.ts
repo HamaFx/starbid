@@ -1,5 +1,5 @@
-import { Container, Graphics } from "pixi.js";
-import { GALAXY_SPIRAL_ARMS, GALAXY_SPIRAL_TWIST, GALAXY_Y_SCALE, spiralArmPoint } from "@/lib/math/galaxyLayout";
+import { Container, Graphics, Text } from "pixi.js";
+import { GALAXY_SPIRAL_ARMS, GALAXY_Y_SCALE, spiralArmPoint } from "@/lib/math/galaxyLayout";
 
 export function drawAccretionGuides(cx: number, cy: number, maxRadius: number): Container {
   const container = new Container();
@@ -33,17 +33,38 @@ export function drawAccretionGuides(cx: number, cy: number, maxRadius: number): 
   return container;
 }
 
-export function drawSingularityCore(cx: number, cy: number): Container {
+export function drawSingularityCore(
+  cx: number,
+  cy: number,
+  leader?: { name: string; totalBidCents: number },
+  onSelect?: () => void,
+  onHover?: (x: number, y: number) => void,
+): Container {
   const container = new Container();
   const core = new Graphics();
+  core.eventMode = "static";
+  core.cursor = "pointer";
+  core.on("pointertap", () => onSelect?.());
+  core.on("pointerover", (event) => onHover?.(event.global.x, event.global.y));
+  core.on("pointerout", () => onHover?.(0, 0));
 
-  core.circle(cx, cy, 64).fill({ color: 0x38bdf8, alpha: 0.04 });
-  core.circle(cx, cy, 48).stroke({ color: 0xfbbf24, alpha: 0.25, width: 1.5 });
-  core.circle(cx, cy, 36).stroke({ color: 0x38bdf8, alpha: 0.95, width: 3 });
-  core.circle(cx, cy, 36).fill({ color: 0x38bdf8, alpha: 0.08 });
+  core.circle(cx, cy, 72).fill({ color: 0x38bdf8, alpha: 0.04 });
+  core.circle(cx, cy, 52).stroke({ color: 0xfbbf24, alpha: 0.25, width: 1.5 });
+  core.circle(cx, cy, 38).stroke({ color: 0x38bdf8, alpha: 0.95, width: 3 });
+  core.circle(cx, cy, 38).fill({ color: 0x38bdf8, alpha: 0.08 });
   core.circle(cx, cy, 30).fill({ color: 0x050508, alpha: 1 });
   core.circle(cx, cy, 30).stroke({ color: 0x000000, alpha: 0.95, width: 3 });
   core.circle(cx, cy, 4.5).fill({ color: 0xffffff, alpha: 0.95 });
+
+  if (leader) {
+    const label = new Text({
+      text: `#1 ${leader.name} · $${(leader.totalBidCents / 100).toFixed(2)}`,
+      style: { fontFamily: "monospace", fontSize: 10, fontWeight: "bold", fill: 0xffffff },
+    });
+    label.anchor.set(0.5, 0);
+    label.position.set(cx, cy + 78);
+    container.addChild(label);
+  }
 
   container.addChild(core);
   return container;

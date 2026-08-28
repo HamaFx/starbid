@@ -59,7 +59,10 @@ export function GalaxyCanvas({
     speedRef.current = speed;
   }, [paused, speed]);
 
-  const { currentZoom, triggerShockwave, isReady, starContainerRef, resetCamera, focusCameraOn } = useGalaxyScene(
+  const activeSorted = useMemo(() => rankActiveStars(stars), [stars]);
+  const leader = activeSorted[0];
+
+  const { currentZoom, triggerShockwave, isReady, starContainerRef, resetCamera, focusCameraOn, updatePopulation } = useGalaxyScene(
     hostRef,
     spritesRef,
     trailsRef,
@@ -69,9 +72,13 @@ export function GalaxyCanvas({
     filterTier,
     searchQuery,
     lod,
+    leader,
+    leader ? () => onSelectStar?.(leader, 1) : undefined,
   );
 
-  const activeSorted = useMemo(() => rankActiveStars(stars), [stars]);
+  useEffect(() => {
+    updatePopulation(activeSorted.length);
+  }, [activeSorted.length, updatePopulation]);
 
   useEffect(() => () => spritePoolRef.current.clear(), []);
 
@@ -88,6 +95,8 @@ export function GalaxyCanvas({
       const layout = calculateGalaxyLayout(
         host?.clientWidth || BASE_WIDTH,
         host?.clientHeight || BASE_HEIGHT,
+        undefined,
+        activeSorted.length,
       );
       const screenPos = pos && viewport
         ? worldToScreen(pos, layout, viewport)
@@ -115,6 +124,8 @@ export function GalaxyCanvas({
       const layout = calculateGalaxyLayout(
         host?.clientWidth || BASE_WIDTH,
         host?.clientHeight || BASE_HEIGHT,
+        undefined,
+        activeSorted.length,
       );
       const viewport = viewportRef.current;
       const worldPos = spritesRef.current.get(star.id)?.getWorldPosition();
@@ -185,7 +196,7 @@ export function GalaxyCanvas({
 
     const hostW = hostRef.current?.clientWidth || BASE_WIDTH;
     const hostH = hostRef.current?.clientHeight || BASE_HEIGHT;
-    const maxRadius = calculateGalaxyLayout(hostW, hostH).maxRadius;
+    const maxRadius = calculateGalaxyLayout(hostW, hostH, undefined, activeSorted.length).maxRadius;
     const currentMap = spritesRef.current;
     const activeIds = new Set<string>();
 

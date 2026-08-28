@@ -21,6 +21,18 @@ export class GalaxyViewport {
   private vy = 0;
   public minZoom = 0.4;
   public maxZoom = 4.0;
+  private worldRadius = 0;
+
+  public updateWorldRadius(radius: number) {
+    this.worldRadius = Math.max(0, radius);
+    const viewportRadius = Math.min(this.cx, this.cy);
+    const fitScale = this.worldRadius > 0 ? Math.min(1, viewportRadius / this.worldRadius) : 1;
+    if (this.targetScale > fitScale) {
+      this.targetScale = fitScale;
+      this.targetX = 0;
+      this.targetY = 0;
+    }
+  }
 
   // Multi-touch pinch tracking
   private activePointers = new Map<number, { x: number; y: number }>();

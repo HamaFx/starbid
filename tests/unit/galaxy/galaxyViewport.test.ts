@@ -19,6 +19,12 @@ describe("GalaxyViewport", () => {
     expect(camera.targetY).toBe(100);
   });
 
+  it("automatically zooms out when the world grows beyond the viewport", () => {
+    const camera = viewport();
+    camera.updateWorldRadius(1000);
+    expect(camera.targetScale).toBeLessThan(1);
+  });
+
   it("resets scale and pan", () => {
     const camera = viewport();
     camera.focusOn(100, 50, 2);
