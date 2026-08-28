@@ -10,7 +10,6 @@ import { GalaxyViewport } from "@/components/galaxy/GalaxyViewport";
 import { CanvasControls } from "@/components/galaxy/CanvasControls";
 import { sound } from "@/components/galaxy/AudioFeedback";
 import { useGalaxyStore } from "@/lib/store/galaxyStore";
-import { radius } from "@/lib/math/orbit";
 import { calculateGalaxyLayout, rankActiveStars, worldToScreen } from "@/lib/math/galaxyLayout";
 import type { FilterTier } from "@/components/galaxy/ObservatoryHUD";
 import type { Star } from "@/lib/types";
@@ -136,7 +135,7 @@ export function GalaxyCanvas({
       sound.playTick(pan);
       const rank = activeSorted.findIndex((s) => s.id === star.id) + 1;
       const sprite = spritesRef.current.get(star.id);
-      const r = sprite?.currentRadius ?? radius(star.totalBidCents / 100, layout.maxRadius);
+      const r = sprite?.currentRadius ?? layout.maxRadius * 0.16;
       const au = ((r / layout.maxRadius) * 5.0).toFixed(2);
       const orbitalSpeed = (350 / Math.sqrt(Math.max(10, r))).toFixed(1);
       const angleDeg = Math.round(spritesRef.current.get(star.id)?.getBearingDegrees() ?? star.angleSeed % 360);
@@ -167,7 +166,8 @@ export function GalaxyCanvas({
   useEffect(() => {
     if (!recentEvents.length) return;
     const latest = recentEvents[0];
-    const eventKey = `${latest.starId}-${latest.eventType}-${latest.totalBidCents}`;
+    const eventKey = latest.eventId
+      ?? `${latest.sequence ?? "time"}-${latest.starId}-${latest.eventType}-${latest.totalBidCents}-${latest.timestamp ?? ""}`;
     if (lastEventRef.current === eventKey) return;
     lastEventRef.current = eventKey;
 

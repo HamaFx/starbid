@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { GalaxyCanvas } from "@/components/galaxy/GalaxyCanvas";
 import { GalaxyListView } from "@/components/galaxy/GalaxyListView";
@@ -10,10 +10,17 @@ import { useLOD } from "@/components/galaxy/useLOD";
 
 export function ResponsiveGalaxy({ stars }: { stars: Star[] }) {
   const lod = useLOD();
-  const [view, setView] = useState<"list" | "galaxy">(() => {
-    if (typeof window === "undefined") return "galaxy";
-    return window.innerWidth < 768 ? "list" : "galaxy";
-  });
+  const [view, setView] = useState<"list" | "galaxy">("galaxy");
+
+  useEffect(() => {
+    const mediaQuery = window.matchMedia("(max-width: 767px)");
+    const syncView = () => {
+      if (mediaQuery.matches) setView("list");
+    };
+    syncView();
+    mediaQuery.addEventListener("change", syncView);
+    return () => mediaQuery.removeEventListener("change", syncView);
+  }, []);
   const [selectedStar, setSelectedStar] = useState<{ star: Star; rank: number } | null>(null);
 
   const effectiveView = lod === "list" ? "list" : view;

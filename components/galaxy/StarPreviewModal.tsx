@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import Link from "next/link";
 import { sound } from "@/components/galaxy/AudioFeedback";
 import type { Star } from "@/lib/types";
@@ -18,21 +18,30 @@ export function StarPreviewModal({
   onNextStar?: () => void;
   onPrevStar?: () => void;
 }) {
+  const closeRef = useRef(onClose);
+  const nextRef = useRef(onNextStar);
+  const prevRef = useRef(onPrevStar);
+  useEffect(() => {
+    closeRef.current = onClose;
+    nextRef.current = onNextStar;
+    prevRef.current = onPrevStar;
+  }, [onClose, onNextStar, onPrevStar]);
+
   useEffect(() => {
     const handleKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") onClose();
-      if (e.key === "ArrowRight" && onNextStar) {
+      if (e.key === "Escape") closeRef.current();
+      if (e.key === "ArrowRight" && nextRef.current) {
         sound.playTick();
-        onNextStar();
+        nextRef.current();
       }
-      if (e.key === "ArrowLeft" && onPrevStar) {
+      if (e.key === "ArrowLeft" && prevRef.current) {
         sound.playTick();
-        onPrevStar();
+        prevRef.current();
       }
     };
     window.addEventListener("keydown", handleKey);
     return () => window.removeEventListener("keydown", handleKey);
-  }, [onClose, onNextStar, onPrevStar]);
+  }, []);
 
   if (!star) return null;
 
@@ -43,12 +52,12 @@ export function StarPreviewModal({
   const tweetUrl = `https://twitter.com/intent/tweet?text=${shareText}`;
 
   return (
-    <div
-      role="dialog"
+    <dialog
+      open
       aria-modal="true"
       aria-labelledby="star-preview-title"
-      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/70 p-0 sm:p-4 backdrop-blur-xs font-mono"
-      onClick={onClose}
+      className="fixed inset-0 z-50 m-0 flex h-full w-full max-w-none items-end justify-center border-0 bg-black/70 p-0 backdrop-blur-xs font-mono sm:items-center sm:p-4"
+      onClick={(event) => { if (event.target === event.currentTarget) onClose(); }}
     >
       <div
         className="terminal-window w-full max-w-md rounded-t-2xl sm:rounded-xl overflow-hidden shadow-2xl pb-6 sm:pb-0 border-t sm:border border-white/[0.12] bg-[#0c0c12]"
@@ -69,6 +78,7 @@ export function StarPreviewModal({
           <button
             type="button"
             onClick={onClose}
+            aria-label="Close star preview"
             className="hover:text-[#f3f4f6] text-xs p-1"
           >
             [✕]
@@ -131,6 +141,7 @@ export function StarPreviewModal({
                 sound.playTick();
                 onPrevStar?.();
               }}
+              aria-label="View previous star"
               className="rounded px-2 py-1 bg-white/[0.03] hover:text-[#38bdf8] hover:bg-white/10 active:scale-95 transition"
             >
               ← [prev star]
@@ -142,6 +153,7 @@ export function StarPreviewModal({
                 sound.playTick();
                 onNextStar?.();
               }}
+              aria-label="View next star"
               className="rounded px-2 py-1 bg-white/[0.03] hover:text-[#38bdf8] hover:bg-white/10 active:scale-95 transition"
             >
               [next star] →
@@ -151,6 +163,7 @@ export function StarPreviewModal({
           <div className="pt-1 flex flex-col sm:flex-row gap-2">
             <a
               href={`/api/click/${encodeURIComponent(star.id)}`}
+              onClick={() => { void fetch(`/api/click/${encodeURIComponent(star.id)}/track`, { method: "POST", keepalive: true }); }}
               target="_blank"
               rel="noopener noreferrer"
               className="flex-1 text-center rounded-lg border border-[#38bdf8]/60 bg-[#38bdf8]/15 py-3 text-xs font-bold text-[#38bdf8] transition hover:bg-[#38bdf8] hover:text-[#07070b] active:scale-95"
@@ -166,6 +179,6 @@ export function StarPreviewModal({
           </div>
         </div>
       </div>
-    </div>
+    </dialog>
   );
 }

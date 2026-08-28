@@ -94,8 +94,9 @@ function mergeAuthoritativeStars(
       (eventSequence(event) !== null || eventTime(event) >= Date.parse(refreshed.enteredAt))
     ) {
       refreshedById.set(id, { ...refreshed, totalBidCents: event.totalBidCents });
-    } else if (!refreshed) {
-      refreshedById.set(id, applyGalaxyEvent([], event)[0]);
+    } else if (!refreshed && event.eventType === "spawn") {
+      const spawnedStar = applyGalaxyEvent([], event)[0];
+      if (spawnedStar) refreshedById.set(id, spawnedStar);
     }
   });
 
@@ -113,7 +114,10 @@ export const useGalaxyStore = create<GalaxyState>((set) => ({
   applyEvent: (event) =>
     set((state) => ({
       stars: applyGalaxyEvent(state.stars, event),
-      recentEvents: [event, ...state.recentEvents].slice(0, 15),
+      recentEvents: [
+        { ...event, receivedAt: event.receivedAt ?? Date.now() },
+        ...state.recentEvents,
+      ].slice(0, 15),
     })),
 }));
 

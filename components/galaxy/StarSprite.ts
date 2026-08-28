@@ -1,6 +1,6 @@
 import { Container, Graphics, Text } from "pixi.js";
 import { angularVelocity } from "@/lib/math/orbit";
-import { orbitPoint, GALAXY_Y_SCALE, galaxyRadiusForStar, spiralAngleForStar, starSizeForRank } from "@/lib/math/galaxyLayout";
+import { orbitPoint, GALAXY_Y_SCALE, rankOrbitRadius, spiralAngleForStar, starSizeForRank } from "@/lib/math/galaxyLayout";
 import type { Star } from "@/lib/types";
 
 export class StarSprite {
@@ -51,7 +51,7 @@ export class StarSprite {
       this.onHover(null, 0, 0);
     });
 
-    this.targetRadius = galaxyRadiusForStar(star, rank, population.length, maxRadius);
+    this.targetRadius = rankOrbitRadius(star, rank, population.length, maxRadius);
     this.currentRadius = this.targetRadius;
     this.currentAngle = spiralAngleForStar(star, rank, this.currentRadius, maxRadius);
     this.starSize = this.calculateStarSize();
@@ -98,21 +98,23 @@ export class StarSprite {
     this.rank = rank;
     this.maxRadius = maxRadius;
     this.population = population;
-    this.targetRadius = galaxyRadiusForStar(star, rank, population.length, maxRadius);
+    this.targetRadius = rankOrbitRadius(star, rank, population.length, maxRadius);
     this.starSize = this.calculateStarSize();
     this.label.text = this.getLabelText();
     this.label.style.fill = this.getStarColor();
+    this.label.style.fontSize = this.rank === 0 ? 10 : 8.5;
+    this.label.style.fontWeight = this.rank === 0 ? "bold" : "normal";
     this.redraw();
   }
 
   public updatePopulation(population: Pick<Star, "totalBidCents">[]) {
     this.population = population;
-    this.targetRadius = galaxyRadiusForStar(this.star, this.rank, population.length, this.maxRadius);
+    this.targetRadius = rankOrbitRadius(this.star, this.rank, population.length, this.maxRadius);
   }
 
   public updateLayout(maxRadius: number) {
     this.maxRadius = maxRadius;
-    this.targetRadius = galaxyRadiusForStar(this.star, this.rank, this.population.length, maxRadius);
+    this.targetRadius = rankOrbitRadius(this.star, this.rank, this.population.length, maxRadius);
   }
 
   public getWorldPosition() {

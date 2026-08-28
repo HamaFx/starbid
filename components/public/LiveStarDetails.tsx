@@ -90,6 +90,7 @@ export function LiveStarDetails({ star, stars = [star] }: { star: Star; stars?: 
         </div>
         <a
           href={`/api/click/${encodeURIComponent(star.id)}`}
+          onClick={() => { void fetch(`/api/click/${encodeURIComponent(star.id)}/track`, { method: "POST", keepalive: true }); }}
           target="_blank"
           rel="noopener noreferrer"
           className="shrink-0 rounded border border-[#38bdf8]/50 bg-[#38bdf8]/15 px-3 py-1.5 text-xs font-semibold text-[#38bdf8] hover:bg-[#38bdf8] hover:text-[#07070b] transition"

@@ -45,10 +45,12 @@ export function calculateGalaxyLayout(
   const safeHeight = Math.max(0, height);
   const safeYScale = Math.max(Number.EPSILON, yScale);
   const populationScale = galaxyPopulationScale(starCount);
-  const maxRadius = Math.min(
+  const fittedRadius = Math.min(
     safeWidth * GALAXY_HORIZONTAL_MARGIN,
     (safeHeight * GALAXY_VERTICAL_MARGIN) / safeYScale,
-  ) * populationScale;
+  );
+  // Population increases visual density, not the physical scene bounds.
+  const maxRadius = fittedRadius * Math.min(populationScale, GALAXY_MAX_POPULATION_SCALE);
 
   return {
     width: safeWidth,
@@ -121,7 +123,7 @@ export function spiralAngleForStar(
   return armAngle + seed * 0.12 + jitter;
 }
 
-export function galaxyRadiusForStar(
+export function rankOrbitRadius(
   star: Pick<Star, "id">,
   rank: number,
   starCount: number,
@@ -133,6 +135,9 @@ export function galaxyRadiusForStar(
   const bulge = minimum + normalizedRank * (1 - minimum);
   return maxRadius * Math.min(0.96, Math.max(minimum, bulge * 0.82 + seed * 0.18));
 }
+
+/** @deprecated Use rankOrbitRadius for explicit rank-based geometry. */
+export const galaxyRadiusForStar = rankOrbitRadius;
 
 export function starSizeForRank(rank: number, starCount: number, bidCents: number): number {
   const crowd = crowdScale(starCount);
@@ -149,7 +154,7 @@ export function galaxyPointForStar(
   cx = 0,
   cy = 0,
 ): GalaxyPoint {
-  const radius = galaxyRadiusForStar(star, rank, starCount, maxRadius);
+  const radius = rankOrbitRadius(star, rank, starCount, maxRadius);
   return orbitPoint(cx, cy, radius, spiralAngleForStar(star, rank, radius, maxRadius));
 } 
 

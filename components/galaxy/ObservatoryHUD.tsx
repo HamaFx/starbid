@@ -52,6 +52,7 @@ export function ObservatoryHUD({
             type="search"
             value={searchQuery}
             onChange={(e) => onSearchChange(e.target.value)}
+            aria-label="Search orbiting stars"
             placeholder="grep orbit..."
             className="hidden sm:block flex-1 rounded-lg border border-white/[0.08] bg-[#07070b] px-2.5 py-1.5 text-[11px] text-[#f3f4f6] outline-none placeholder-[#52525b] focus:border-[#38bdf8]"
           />

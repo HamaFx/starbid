@@ -106,6 +106,14 @@ The documented texture atlas, sprite pooling, LOD, low-end detection, static out
 9. Add demo-star visual treatment.
 10. Add viewport, geometry, resize, and consistency tests.
 
+## Current implementation notes
+
+The active canvas uses rank-driven orbit radii through `rankOrbitRadius`, while
+`orbitRadiusForStar` remains available for experiments and tests. Population
+scaling is applied to the fitted scene radius and should be treated as a
+visual-density control rather than a guarantee that every enlarged world fits
+without camera adjustment.
+
 ## Verification baseline
 
 At audit time:

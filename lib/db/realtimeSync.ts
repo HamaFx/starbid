@@ -8,7 +8,7 @@ let refreshTimeout: ReturnType<typeof setTimeout> | null = null;
 function scheduleRefresh(client: SupabaseClient<Database>, delayMs = 1500) {
   if (refreshTimeout) clearTimeout(refreshTimeout);
   refreshTimeout = setTimeout(() => {
-    void refreshGalaxy(client);
+    void refreshGalaxy(client).catch(() => undefined);
     refreshTimeout = null;
   }, delayMs);
 }
@@ -52,5 +52,6 @@ function parseGalaxyEvent(payload: Record<string, unknown>): GalaxyEvent | null 
   if (!["spawn", "fuel", "singularity_takeover"].includes(payload.event_type)) return null;
   const timestamp = typeof payload.timestamp === "string" ? payload.timestamp : typeof payload.created_at === "string" ? payload.created_at : undefined;
   const sequence = typeof payload.sequence === "number" ? payload.sequence : undefined;
-  return { starId: payload.star_id, totalBidCents: payload.total_bid_cents, eventType: payload.event_type as GalaxyEvent["eventType"], name: payload.name, timestamp, sequence, receivedAt: Date.now() };
+  const eventId = typeof payload.event_id === "string" ? payload.event_id : undefined;
+  return { eventId, starId: payload.star_id, totalBidCents: payload.total_bid_cents, eventType: payload.event_type as GalaxyEvent["eventType"], name: payload.name, timestamp, sequence, receivedAt: Date.now() };
 }

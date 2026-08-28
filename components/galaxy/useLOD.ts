@@ -15,7 +15,16 @@ export function useLOD(): Lod {
   const [lod, setLod] = useState<Lod>(initialLod);
 
   useEffect(() => {
-    if (lod === "list") return;
+    const motionQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const syncMotionPreference = () => {
+      if (motionQuery.matches) setLod("list");
+      else setLod((current) => (current === "list" ? "full" : current));
+    };
+    motionQuery.addEventListener("change", syncMotionPreference);
+
+    if (lod === "list") {
+      return () => motionQuery.removeEventListener("change", syncMotionPreference);
+    }
     let frames = 0;
     const started = performance.now();
     let frameId = 0;
@@ -30,7 +39,10 @@ export function useLOD(): Lod {
     };
 
     frameId = requestAnimationFrame(probe);
-    return () => cancelAnimationFrame(frameId);
+    return () => {
+      cancelAnimationFrame(frameId);
+      motionQuery.removeEventListener("change", syncMotionPreference);
+    };
   }, [lod]);
 
   return lod;

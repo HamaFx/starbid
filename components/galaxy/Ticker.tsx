@@ -23,8 +23,8 @@ export function Ticker({ initialStars = [] }: { initialStars?: Star[] }) {
 
       <div className="flex flex-1 items-center gap-6 overflow-x-auto whitespace-nowrap scrollbar-none font-mono">
         {recentEvents.length > 0 ? (
-          recentEvents.slice(0, 3).map((event, idx) => (
-            <span key={`${event.starId}-${idx}`} className="inline-flex items-center gap-2 text-[#fff4e0]">
+          recentEvents.slice(0, 3).map((event) => (
+            <span key={event.eventId ?? `${event.sequence ?? "time"}-${event.starId}-${event.eventType}-${event.timestamp ?? ""}`} className="inline-flex items-center gap-2 text-[#fff4e0]">
               <span className={event.eventType === "singularity_takeover" ? "text-[#ffb627] font-semibold" : "text-[#4ade80]"}>
                 {event.eventType === "singularity_takeover" ? "⚡ TAKEOVER" : event.eventType === "spawn" ? "✦ NEW STAR" : "▲ FUEL"}
               </span>

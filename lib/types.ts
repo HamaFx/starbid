@@ -54,6 +54,7 @@ export type GalaxyEvent = {
   name: string;
   timestamp?: string;
   sequence?: number;
+  eventId?: string;
   receivedAt?: number;
 };
 

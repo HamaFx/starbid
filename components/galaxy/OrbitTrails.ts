@@ -29,6 +29,11 @@ export class OrbitTrails {
     this.buffers.delete(id);
   }
 
+  public clear() {
+    this.buffers.clear();
+    this.gfx.clear();
+  }
+
   public renderTrails(tierColors: Map<string, { color: number; alpha: number }>) {
     this.gfx.clear();
 

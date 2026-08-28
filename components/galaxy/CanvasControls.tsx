@@ -30,7 +30,7 @@ export function CanvasControls({
           <button type="button" onClick={onZoomOut} aria-label="Zoom out" className="rounded px-1.5 py-0.5 text-[#71717a] hover:bg-white/[0.06] hover:text-[#f3f4f6]">
             -
           </button>
-          <button type="button" onClick={onResetZoom} className="rounded px-1.5 py-0.5 text-[#71717a] hover:bg-white/[0.06] hover:text-[#38bdf8]">
+          <button type="button" onClick={onResetZoom} aria-label="Reset camera zoom" className="rounded px-1.5 py-0.5 text-[#71717a] hover:bg-white/[0.06] hover:text-[#38bdf8]">
             ↺ {zoom.toFixed(1)}x
           </button>
           <span className="text-[#27272a]">|</span>
@@ -41,6 +41,7 @@ export function CanvasControls({
       <button
         type="button"
         onClick={onTogglePause}
+        aria-label={paused ? "Resume galaxy animation" : "Pause galaxy animation"}
         className="rounded px-2 py-0.5 text-[#71717a] transition hover:bg-white/[0.06] hover:text-[#f3f4f6]"
       >
         {paused ? "▶ resume" : "⏸ pause"}
@@ -54,6 +55,7 @@ export function CanvasControls({
             key={s}
             type="button"
             onClick={() => onChangeSpeed(s)}
+            aria-label={`Set orbit speed to ${s}x`}
             className={`rounded px-1.5 py-0.5 transition ${
               speed === s
                 ? "bg-white/10 font-semibold text-[#38bdf8]"

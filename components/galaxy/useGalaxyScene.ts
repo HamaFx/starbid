@@ -56,12 +56,14 @@ export function useGalaxyScene(
     let onPointerDown: ((e: PointerEvent) => void) | null = null;
     let onPointerMove: ((e: PointerEvent) => void) | null = null;
     let onPointerUp: ((e: PointerEvent) => void) | null = null;
+    let onPointerCapture: ((e: PointerEvent) => void) | null = null;
     let onDblClick: ((e: MouseEvent) => void) | null = null;
 
     const initialWidth = host.clientWidth || BASE_WIDTH;
     const initialHeight = host.clientHeight || BASE_HEIGHT;
 
-    void app
+    let destroyed = false;
+    const initialization = app
       .init({
         width: initialWidth,
         height: initialHeight,
@@ -71,8 +73,8 @@ export function useGalaxyScene(
         autoDensity: true,
       })
       .then(() => {
-        if (!mounted || !hostRef.current) {
-          app.destroy(true, { children: true });
+        if (!mounted || destroyed || !hostRef.current) {
+          if (!destroyed) app.destroy(true, { children: true });
           return;
         }
 
@@ -185,6 +187,8 @@ export function useGalaxyScene(
               cy = layout.cy;
               maxRadius = layout.maxRadius;
               viewport.updateCenter(cx, cy, 1.0);
+              viewport.updateWorldRadius(maxRadius);
+              trails.clear();
               const population = Array.from(sprites ?? [], ([, sprite]) => sprite.star);
               sprites?.forEach((sprite) => {
                 sprite.updateLayout(maxRadius);
@@ -230,8 +234,14 @@ export function useGalaxyScene(
         };
 
         app.canvas.addEventListener("wheel", onWheel, { passive: false });
+        onPointerCapture = (e: PointerEvent) => {
+          if (e.currentTarget instanceof HTMLCanvasElement && !e.currentTarget.hasPointerCapture(e.pointerId)) {
+            e.currentTarget.setPointerCapture(e.pointerId);
+          }
+        };
+
         app.canvas.addEventListener("pointerdown", onPointerDown);
-        app.canvas.addEventListener("pointerdown", (e) => app.canvas.setPointerCapture(e.pointerId));
+        app.canvas.addEventListener("pointerdown", onPointerCapture);
         window.addEventListener("pointermove", onPointerMove);
         window.addEventListener("pointerup", onPointerUp);
         window.addEventListener("pointercancel", onPointerUp);
@@ -240,12 +250,18 @@ export function useGalaxyScene(
         setIsReady(true);
       });
 
+    initialization.catch(() => {
+      if (mounted) setIsReady(false);
+    });
+
     return () => {
       mounted = false;
+      destroyed = true;
       setIsReady(false);
       if (resizeObserver) resizeObserver.disconnect();
       if (onWheel) app.canvas.removeEventListener("wheel", onWheel);
       if (onPointerDown) app.canvas.removeEventListener("pointerdown", onPointerDown);
+      if (onPointerCapture) app.canvas.removeEventListener("pointerdown", onPointerCapture);
       if (onDblClick) app.canvas.removeEventListener("dblclick", onDblClick);
       if (onPointerMove) window.removeEventListener("pointermove", onPointerMove);
       if (onPointerUp) {
