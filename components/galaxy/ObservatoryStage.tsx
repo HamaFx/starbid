@@ -66,7 +66,7 @@ export function ObservatoryStage({ initialStars = [] }: { initialStars?: Star[] 
   }, [cycleStar, paletteOpen, leaderboardOpen, selectedStar]);
 
   return (
-    <div className="terminal-window relative flex min-h-[85vh] w-full flex-col overflow-hidden rounded-xl border border-white/[0.08] sm:min-h-[88vh]">
+    <div className="terminal-window relative flex h-[calc(100dvh-1.5rem)] sm:h-[calc(100dvh-3rem)] max-h-[920px] min-h-[480px] w-full flex-col overflow-hidden rounded-xl border border-white/[0.08] shadow-2xl">
       <TerminalWindowBar
         title="starbid — ~/supermassive/accretion_alpha — zsh"
         rightSlot={
@@ -87,9 +87,9 @@ export function ObservatoryStage({ initialStars = [] }: { initialStars?: Star[] 
         onOpenPalette={() => setPaletteOpen(true)}
       />
 
-      <div className="relative flex-1 min-h-[550px] sm:min-h-[640px] lg:min-h-[720px] bg-[#07070b]">
+      <div className="relative flex-1 min-h-0 w-full bg-[#07070b]">
         {view === "galaxy" ? (
-          <div className="h-full w-full min-h-[550px] sm:min-h-[640px] lg:min-h-[720px]">
+          <div className="h-full w-full min-h-0">
             <GalaxyCanvas stars={currentStars} filterTier={filterTier} searchQuery={searchQuery} onSelectStar={(star, rank) => setSelectedStar({ star, rank })} />
           </div>
         ) : (

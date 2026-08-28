@@ -75,14 +75,14 @@ export function useGalaxyScene(
         app.canvas.style.height = "100%";
         app.canvas.style.display = "block";
 
-        const world = new Container();
-        app.stage.addChild(world);
-        const viewport = new GalaxyViewport(world);
-        viewportRef.current = viewport;
-
         const cx = BASE_WIDTH / 2;
         const cy = BASE_HEIGHT / 2;
         const maxRadius = Math.min(BASE_WIDTH, BASE_HEIGHT) * 0.44;
+
+        const world = new Container();
+        app.stage.addChild(world);
+        const viewport = new GalaxyViewport(world, cx, cy);
+        viewportRef.current = viewport;
 
         // Layer 1: Coordinate Grid & Accretion Guides
         world.addChild(drawAccretionGuides(cx, cy, maxRadius));

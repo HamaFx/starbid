@@ -9,27 +9,32 @@ export class GalaxyViewport {
   public targetX = 0;
   public targetY = 0;
 
+  public cx: number;
+  public cy: number;
+
   // Inertia and Momentum Physics
   private isDragging = false;
   private lastDragX = 0;
   private lastDragY = 0;
   private vx = 0;
   private vy = 0;
-  private minZoom = 0.45;
-  private maxZoom = 3.5;
+  private minZoom = 0.4;
+  private maxZoom = 3.0;
 
-  constructor(world: Container) {
+  constructor(world: Container, cx: number, cy: number) {
     this.world = world;
+    this.cx = cx;
+    this.cy = cy;
+    // Set pivot directly to the celestial center (Singularity Core)
+    this.world.pivot.set(cx, cy);
+    this.world.position.set(cx, cy);
   }
 
   public onWheel(deltaY: number, mouseX: number, mouseY: number, cx: number, cy: number) {
-    const factor = deltaY < 0 ? 1.14 : 0.88;
+    const factor = deltaY < 0 ? 1.12 : 0.89;
     const newTarget = Math.max(this.minZoom, Math.min(this.maxZoom, this.targetScale * factor));
-    const ratio = newTarget / this.targetScale;
-
-    // Zoom centered towards pointer coordinates
-    this.targetX = mouseX - (mouseX - this.targetX) * ratio;
-    this.targetY = mouseY - (mouseY - this.targetY) * ratio;
+    
+    // Zoom centered smoothly around center pivot
     this.targetScale = newTarget;
   }
 
@@ -68,10 +73,10 @@ export class GalaxyViewport {
     this.targetScale = Math.max(this.minZoom, this.targetScale * 0.8);
   }
 
-  public focusOn(targetWorldX: number, targetWorldY: number, cx: number, cy: number, zoom = 1.7) {
+  public focusOn(targetWorldX: number, targetWorldY: number, cx: number, cy: number, zoom = 1.6) {
     this.targetScale = Math.min(this.maxZoom, Math.max(this.minZoom, zoom));
-    this.targetX = cx - targetWorldX * this.targetScale;
-    this.targetY = cy - targetWorldY * this.targetScale;
+    this.targetX = (cx - targetWorldX) * this.targetScale;
+    this.targetY = (cy - targetWorldY) * this.targetScale;
     this.vx = 0;
     this.vy = 0;
   }
@@ -101,6 +106,7 @@ export class GalaxyViewport {
     this.y += (this.targetY - this.y) * ease;
 
     this.world.scale.set(this.scale);
-    this.world.position.set(this.x, this.y);
+    // Keep positioned around center pivot (cx, cy)
+    this.world.position.set(this.cx + this.x, this.cy + this.y);
   }
 }

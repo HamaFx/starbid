@@ -157,12 +157,12 @@ export function GalaxyCanvas({
   }, [isReady, activeSorted, handleStarClick, handleStarHover, starContainerRef]);
 
   return (
-    <div className="relative h-full min-h-[550px] w-full overflow-hidden rounded-xl bg-[#07070b] sm:min-h-[640px] lg:min-h-[720px] select-none cursor-grab active:cursor-grabbing">
+    <div className="relative h-full w-full min-h-0 overflow-hidden rounded-xl bg-[#07070b] select-none cursor-grab active:cursor-grabbing">
       <div
         ref={hostRef}
         aria-label="Interactive celestial accretion disk — use mouse to pan and scroll to zoom"
         role="application"
-        className="h-full w-full min-h-[550px] sm:min-h-[640px] lg:min-h-[720px]"
+        className="h-full w-full min-h-0"
       />
       <div className="absolute bottom-14 right-2.5 z-20 sm:bottom-2.5">
         <CanvasControls
