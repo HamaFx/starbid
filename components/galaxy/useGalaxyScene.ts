@@ -1,3 +1,4 @@
+import "pixi.js/unsafe-eval";
 import { useEffect, useRef, useState, useCallback } from "react";
 import { Application, Container } from "pixi.js";
 import { drawAccretionGuides, drawSingularityCore } from "@/components/galaxy/CanvasBackground";
