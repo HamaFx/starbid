@@ -1,6 +1,6 @@
 import { Container, Graphics, Text } from "pixi.js";
 import { angularVelocity } from "@/lib/math/orbit";
-import { orbitPoint, GALAXY_Y_SCALE, orbitRadiusForStar } from "@/lib/math/galaxyLayout";
+import { orbitPoint, GALAXY_Y_SCALE, orbitRadiusForStar, crowdScale } from "@/lib/math/galaxyLayout";
 import type { Star } from "@/lib/types";
 
 export class StarSprite {
@@ -83,7 +83,8 @@ export class StarSprite {
 
   private calculateStarSize(): number {
     const bidSize = Math.min(10, Math.max(4.5, 4.5 + Math.log1p(this.star.totalBidCents / 100) * 0.8));
-    return bidSize + (this.rank === 0 ? 2 : this.rank < 3 ? 1 : 0);
+    const rankBoost = this.rank === 0 ? 2 : this.rank < 3 ? 1 : 0;
+    return (bidSize + rankBoost) * crowdScale(this.population.length);
   }
 
   private getStarColor(): number {
