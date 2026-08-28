@@ -3,13 +3,14 @@
 import { useState, useMemo } from "react";
 import Link from "next/link";
 import type { Star } from "@/lib/types";
+import { rankActiveStars } from "@/lib/math/galaxyLayout";
 
 export function LeaderboardTable({ stars }: { stars: Star[] }) {
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState<"all" | "founding" | "top10">("all");
 
   const filtered = useMemo(() => {
-    let list = [...stars].filter((s) => s.status === "active").sort((a, b) => b.totalBidCents - a.totalBidCents);
+    let list = rankActiveStars(stars);
     if (filter === "founding") list = list.filter((s) => s.isFounding);
     if (filter === "top10") list = list.slice(0, 10);
     if (search.trim()) {

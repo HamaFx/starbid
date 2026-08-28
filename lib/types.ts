@@ -53,6 +53,8 @@ export type GalaxyEvent = {
   eventType: EventType;
   name: string;
   timestamp?: string;
+  sequence?: number;
+  receivedAt?: number;
 };
 
 export type PendingStatus = {

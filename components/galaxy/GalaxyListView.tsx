@@ -1,5 +1,6 @@
 import Link from "next/link";
 import type { Star } from "@/lib/types";
+import { rankActiveStars } from "@/lib/math/galaxyLayout";
 
 function getTierLabel(index: number) {
   if (index === 0) return { label: "CORE", color: "text-[#38bdf8] bg-[#38bdf8]/10" };
@@ -10,9 +11,7 @@ function getTierLabel(index: number) {
 }
 
 export function GalaxyListView({ stars }: { stars: Star[] }) {
-  const ranked = [...stars]
-    .filter((star) => star.status === "active")
-    .sort((a, b) => b.totalBidCents - a.totalBidCents || a.enteredAt.localeCompare(b.enteredAt));
+  const ranked = rankActiveStars(stars);
   const foundingCount = ranked.filter((s) => s.isFounding).length;
 
   return (

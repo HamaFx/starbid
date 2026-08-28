@@ -1,5 +1,6 @@
 import { Container, Graphics } from "pixi.js";
 import { angularVelocity } from "@/lib/math/orbit";
+import { GALAXY_Y_SCALE } from "@/lib/math/galaxyLayout";
 
 type Particle = {
   r: number;

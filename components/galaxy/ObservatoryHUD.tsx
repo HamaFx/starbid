@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { minimumSingularityTotalCents } from "@/lib/math/rankTargets";
 import type { Star } from "@/lib/types";
+import { rankActiveStars } from "@/lib/math/galaxyLayout";
 
 export type FilterTier = "all" | "core" | "photon" | "inner" | "founding";
 
@@ -23,9 +24,7 @@ export function ObservatoryHUD({
   onOpenLeaderboard: () => void;
   onOpenPalette: () => void;
 }) {
-  const active = [...stars]
-    .filter((s) => s.status === "active")
-    .sort((a, b) => b.totalBidCents - a.totalBidCents);
+  const active = rankActiveStars(stars);
   const totalGravityCents = active.reduce((sum, s) => sum + s.totalBidCents, 0);
   const leader = active[0];
   const hurdleCents = leader ? minimumSingularityTotalCents(leader.totalBidCents) : 300;

@@ -3,6 +3,7 @@
 import { useEffect, useState, useMemo } from "react";
 import Link from "next/link";
 import type { Star } from "@/lib/types";
+import { rankActiveStars } from "@/lib/math/galaxyLayout";
 
 export function LeaderboardDrawer({
   stars,
@@ -27,9 +28,7 @@ export function LeaderboardDrawer({
   }, [open, onClose]);
 
   const sorted = useMemo(() => {
-    let list = [...stars]
-      .filter((s) => s.status === "active")
-      .sort((a, b) => b.totalBidCents - a.totalBidCents);
+    let list = rankActiveStars(stars);
     if (filter === "top5") list = list.slice(0, 5);
     if (filter === "founding") list = list.filter((s) => s.isFounding);
     if (search.trim()) {

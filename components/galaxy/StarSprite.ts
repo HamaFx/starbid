@@ -1,5 +1,6 @@
 import { Container, Graphics, Text } from "pixi.js";
-import { radius, angularVelocity } from "@/lib/math/orbit";
+import { angularVelocity } from "@/lib/math/orbit";
+import { orbitPoint, GALAXY_Y_SCALE, orbitRadiusForStar } from "@/lib/math/galaxyLayout";
 import type { Star } from "@/lib/types";
 
 export class StarSprite {
@@ -15,36 +16,42 @@ export class StarSprite {
   public isHovered = false;
   public isDimmed = false;
   public isFocused = false;
-  private pulsePhase: number;
+  private maxRadius: number;
+  private population: Pick<Star, "totalBidCents">[];
+  private onClick: (star: Star) => void;
+  private onHover: (star: Star | null, x: number, y: number) => void;
 
   constructor(
     star: Star,
     rank: number,
     maxRadius: number,
     onClick: (star: Star) => void,
-    onHover: (star: Star | null, x: number, y: number) => void
+    onHover: (star: Star | null, x: number, y: number) => void,
+    population: Pick<Star, "totalBidCents">[] = [star],
   ) {
     this.star = star;
     this.rank = rank;
-    this.pulsePhase = (star.angleSeed % 100) * 0.1;
+    this.onClick = onClick;
+    this.onHover = onHover;
+    this.maxRadius = maxRadius;
+    this.population = population;
     this.container = new Container();
     this.container.eventMode = "static";
     this.container.cursor = "pointer";
 
-    this.container.on("pointertap", () => onClick(this.star));
+    this.container.on("pointertap", () => this.onClick(this.star));
     this.container.on("pointerover", (e) => {
       this.isHovered = true;
       this.redraw();
-      onHover(this.star, e.global.x, e.global.y);
+      this.onHover(this.star, e.global.x, e.global.y);
     });
     this.container.on("pointerout", () => {
       this.isHovered = false;
       this.redraw();
-      onHover(null, 0, 0);
+      this.onHover(null, 0, 0);
     });
 
-    const totalDollars = star.totalBidCents / 100;
-    this.targetRadius = radius(totalDollars, maxRadius);
+    this.targetRadius = orbitRadiusForStar(star, population, maxRadius);
     this.currentRadius = this.targetRadius;
     this.currentAngle = (star.angleSeed * Math.PI) / 180;
     this.starSize = this.calculateStarSize();
@@ -54,7 +61,7 @@ export class StarSprite {
 
     // Dynamic Monospace Label
     this.label = new Text({
-      text: this.star.name.length > 13 ? `${this.star.name.slice(0, 12)}…` : this.star.name,
+      text: this.getLabelText(),
       style: {
         fontFamily: "monospace",
         fontSize: this.rank === 0 ? 10 : 8.5,
@@ -69,12 +76,14 @@ export class StarSprite {
     this.redraw();
   }
 
+  private getLabelText(): string {
+    const name = this.star.name.length > 13 ? `${this.star.name.slice(0, 12)}…` : this.star.name;
+    return this.star.isDemo ? `[DEMO] ${name}` : name;
+  }
+
   private calculateStarSize(): number {
-    if (this.rank === 0) return 10.5; // #1 Core Star (prominent diamond)
-    if (this.rank < 3) return 8.5;   // Ranks 2-3 (Photon Orbit)
-    if (this.rank < 7) return 7.0;   // Ranks 4-7 (Inner Orbit)
-    if (this.rank < 12) return 5.5;  // Ranks 8-12 (Mid Orbit)
-    return 4.5;                      // Outer Drift Stars
+    const bidSize = Math.min(10, Math.max(4.5, 4.5 + Math.log1p(this.star.totalBidCents / 100) * 0.8));
+    return bidSize + (this.rank === 0 ? 2 : this.rank < 3 ? 1 : 0);
   }
 
   private getStarColor(): number {
@@ -85,15 +94,34 @@ export class StarSprite {
     return 0x67e8f9;                     // Electric Ice Blue
   }
 
-  public updateData(star: Star, rank: number, maxRadius: number) {
+  public updateData(star: Star, rank: number, maxRadius: number, population: Pick<Star, "totalBidCents">[] = [star]) {
     this.star = star;
     this.rank = rank;
-    const totalDollars = star.totalBidCents / 100;
-    this.targetRadius = radius(totalDollars, maxRadius);
+    this.maxRadius = maxRadius;
+    this.population = population;
+    this.targetRadius = orbitRadiusForStar(star, population, maxRadius);
     this.starSize = this.calculateStarSize();
-    this.label.text = this.star.name.length > 13 ? `${this.star.name.slice(0, 12)}…` : this.star.name;
+    this.label.text = this.getLabelText();
     this.label.style.fill = this.getStarColor();
     this.redraw();
+  }
+
+  public updatePopulation(population: Pick<Star, "totalBidCents">[]) {
+    this.population = population;
+    this.targetRadius = orbitRadiusForStar(this.star, population, this.maxRadius);
+  }
+
+  public updateLayout(maxRadius: number) {
+    this.maxRadius = maxRadius;
+    this.targetRadius = orbitRadiusForStar(this.star, this.population, maxRadius);
+  }
+
+  public getWorldPosition() {
+    return this.container.position;
+  }
+
+  public getBearingDegrees(): number {
+    return ((this.currentAngle * 180) / Math.PI + 360) % 360;
   }
 
   public setFilterState(isDimmed: boolean, isFocused: boolean) {
@@ -147,6 +175,11 @@ export class StarSprite {
       }
     }
 
+    // Demo stars use a muted ring so they cannot be mistaken for paid stars.
+    if (this.star.isDemo && !this.isDimmed) {
+      this.graphic.circle(0, 0, baseSize + 7).stroke({ color: 0xa855f7, alpha: 0.75, width: 1.2 });
+    }
+
     // Solid Core Star Body
     this.graphic.circle(0, 0, baseSize).fill({
       color: isTop ? 0xffffff : color,
@@ -155,7 +188,7 @@ export class StarSprite {
 
     // Clean label visibility: show top 3 by default, and show any on hover/focus
     const showLabel = this.rank < 3 || this.isHovered || this.isFocused;
-    this.label.visible = showLabel && !this.isDimmed;
+    this.label.visible = (showLabel || this.star.isDemo) && !this.isDimmed;
     this.label.alpha = (this.isHovered ? 1.0 : this.rank === 0 ? 0.95 : 0.75) * alphaMultiplier;
     this.label.position.set(0, baseSize + 4);
   }
@@ -166,13 +199,33 @@ export class StarSprite {
 
     const speed = angularVelocity(Math.max(10, this.currentRadius), 28);
     this.currentAngle += speed * 0.0006 * delta;
-    this.pulsePhase += 0.03 * delta;
-
-    const x = cx + Math.cos(this.currentAngle) * this.currentRadius;
-    const y = cy + Math.sin(this.currentAngle) * this.currentRadius * 0.62;
+    const point = orbitPoint(cx, cy, this.currentRadius, this.currentAngle, GALAXY_Y_SCALE);
+    const x = point.x;
+    const y = point.y;
     this.container.position.set(x, y);
 
     return { x, y };
+  }
+
+  public deactivate() {
+    this.container.visible = false;
+    this.isHovered = false;
+    this.isFocused = false;
+    this.isDimmed = false;
+    this.onHover(null, 0, 0);
+  }
+
+  public reactivate(
+    star: Star,
+    rank: number,
+    maxRadius: number,
+    population: Pick<Star, "totalBidCents">[],
+    callbacks: { onClick: (star: Star) => void; onHover: (star: Star | null, x: number, y: number) => void },
+  ) {
+    this.container.visible = true;
+    this.onClick = callbacks.onClick;
+    this.onHover = callbacks.onHover;
+    this.updateData(star, rank, maxRadius, population);
   }
 
   public destroy() {

@@ -3,6 +3,7 @@
 import { useEffect, useState, useMemo, useRef } from "react";
 import { useRouter } from "next/navigation";
 import type { Star } from "@/lib/types";
+import { rankActiveStars } from "@/lib/math/galaxyLayout";
 
 export function CommandPalette({
   stars,
@@ -24,9 +25,7 @@ export function CommandPalette({
   const [selectedIndex, setSelectedIndex] = useState(0);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  const activeStars = useMemo(() => {
-    return [...stars].filter((s) => s.status === "active").sort((a, b) => b.totalBidCents - a.totalBidCents);
-  }, [stars]);
+  const activeStars = useMemo(() => rankActiveStars(stars), [stars]);
 
   const results = useMemo(() => {
     const q = query.trim().toLowerCase();

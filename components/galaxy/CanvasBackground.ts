@@ -1,4 +1,5 @@
 import { Container, Graphics } from "pixi.js";
+import { GALAXY_Y_SCALE } from "@/lib/math/galaxyLayout";
 
 export function drawAccretionGuides(cx: number, cy: number, maxRadius: number): Container {
   const container = new Container();
@@ -15,7 +16,7 @@ export function drawAccretionGuides(cx: number, cy: number, maxRadius: number): 
     .lineTo(cx, cy + maxRadius * 0.7)
     .stroke({ color: 0x38bdf8, alpha: 0.05, width: 1.5 });
 
-  // Concentric Orbit Boundary Rings with tilted elliptical projection (0.62)
+  // Concentric orbit boundary rings with the shared tilted projection.
   const rings = [
     { r: maxRadius * 0.95, color: 0xffffff, alpha: 0.04, width: 1.0 },
     { r: maxRadius * 0.78, color: 0xffffff, alpha: 0.05, width: 1.0 },
@@ -26,7 +27,7 @@ export function drawAccretionGuides(cx: number, cy: number, maxRadius: number): 
   ];
 
   rings.forEach((ring) => {
-    guides.ellipse(cx, cy, ring.r, ring.r * 0.62).stroke({
+    guides.ellipse(cx, cy, ring.r, ring.r * GALAXY_Y_SCALE).stroke({
       color: ring.color,
       alpha: ring.alpha,
       width: ring.width,

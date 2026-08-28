@@ -3,14 +3,13 @@
 import Link from "next/link";
 import { useGalaxyStore } from "@/lib/store/galaxyStore";
 import type { Star } from "@/lib/types";
+import { rankActiveStars } from "@/lib/math/galaxyLayout";
 
 export function FloatingTicker({ initialStars = [] }: { initialStars?: Star[] }) {
   const storeStars = useGalaxyStore((state) => state.stars);
   const recentEvents = useGalaxyStore((state) => state.recentEvents);
   const stars = storeStars.length ? storeStars : initialStars;
-  const activeStars = [...stars]
-    .filter((s) => s.status === "active")
-    .sort((a, b) => b.totalBidCents - a.totalBidCents);
+  const activeStars = rankActiveStars(stars);
   const leader = activeStars[0];
 
   return (

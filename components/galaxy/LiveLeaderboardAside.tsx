@@ -4,13 +4,12 @@ import Link from "next/link";
 import { useGalaxyStore } from "@/lib/store/galaxyStore";
 import { minimumSingularityTotalCents } from "@/lib/math/rankTargets";
 import type { Star } from "@/lib/types";
+import { rankActiveStars } from "@/lib/math/galaxyLayout";
 
 export function LiveLeaderboardAside({ initialStars }: { initialStars: Star[] }) {
   const storeStars = useGalaxyStore((state) => state.stars);
   const stars = storeStars.length ? storeStars : initialStars;
-  const activeStars = [...stars]
-    .filter((s) => s.status === "active")
-    .sort((a, b) => b.totalBidCents - a.totalBidCents || a.enteredAt.localeCompare(b.enteredAt));
+  const activeStars = rankActiveStars(stars);
 
   const leader = activeStars[0];
   const singularityHurdleCents = leader ? minimumSingularityTotalCents(leader.totalBidCents) : 300;

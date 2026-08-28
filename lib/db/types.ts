@@ -31,7 +31,7 @@ export type Database = {
       stars: Table<StarRow>;
       pending_bids: Table<PendingBid>;
       bid_events: Table<{ id: string; star_id: string; project_id: string; pending_bid_id: string | null; amount_cents: number; resulting_total_cents: number; event_type: string; created_at: string }>;
-      realtime_events: Table<{ id: number; topic: string; payload: Record<string, unknown>; created_at: string }, { topic: string; payload: Record<string, unknown> }, never>;
+      realtime_events: Table<{ id: number; event_sequence: number; topic: string; payload: Record<string, unknown>; created_at: string }, { topic: string; payload: Record<string, unknown> }, never>;
       zone_snapshots: Table<{ id: number; boundaries: Record<string, unknown>; computed_at: string }>;
       action_grants: Table<{ id: string; kind: "new_star" | "recover"; expires_at: string }>;
       moderation_flags: Table<{ id: string; project_id: string; reason: string; source: string; status: string; created_at: string }>;

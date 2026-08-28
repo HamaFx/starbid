@@ -1,4 +1,5 @@
 import { Container, Graphics } from "pixi.js";
+import { GALAXY_Y_SCALE } from "@/lib/math/galaxyLayout";
 
 type Shockwave = {
   x: number;
@@ -72,9 +73,9 @@ export class ShockwaveSystem {
         continue;
       }
 
-      // Draw expanding elliptical gravitational wavefront matching accretion tilt (0.62)
+      // Draw expanding elliptical gravitational wavefront matching accretion tilt.
       this.gfx
-        .ellipse(sw.x, sw.y, sw.radius, sw.radius * 0.62)
+        .ellipse(sw.x, sw.y, sw.radius, sw.radius * GALAXY_Y_SCALE)
         .stroke({
           color: sw.color,
           alpha: sw.alpha,
@@ -85,7 +86,7 @@ export class ShockwaveSystem {
       if (sw.radius > 25) {
         const innerR = sw.radius * 0.75;
         this.gfx
-          .ellipse(sw.x, sw.y, innerR, innerR * 0.62)
+          .ellipse(sw.x, sw.y, innerR, innerR * GALAXY_Y_SCALE)
           .stroke({
             color: sw.color,
             alpha: sw.alpha * 0.4,

@@ -9,6 +9,8 @@ import { ShockwaveSystem } from "@/components/galaxy/ShockwaveSystem";
 import { ConstellationWeb } from "@/components/galaxy/ConstellationWeb";
 import type { FilterTier } from "@/components/galaxy/ObservatoryHUD";
 import type { StarSprite } from "@/components/galaxy/StarSprite";
+import { calculateGalaxyLayout } from "@/lib/math/galaxyLayout";
+import { Lensing } from "@/components/galaxy/Lensing";
 
 export const BASE_WIDTH = 1200;
 export const BASE_HEIGHT = 760;
@@ -21,13 +23,14 @@ export function useGalaxyScene(
   pausedRef: React.RefObject<boolean>,
   speedRef: React.RefObject<number>,
   filterTier: FilterTier = "all",
-  searchQuery = ""
+  searchQuery = "",
+  lod: "full" | "reduced" = "full",
 ) {
   const [currentZoom, setCurrentZoom] = useState(1);
   const [isReady, setIsReady] = useState(false);
-  const appRef = useRef<Application | null>(null);
   const shockwavesRef = useRef<ShockwaveSystem | null>(null);
   const constellationRef = useRef<ConstellationWeb | null>(null);
+  const lensingRef = useRef<Lensing | null>(null);
   const starContainerRef = useRef<Container | null>(null);
 
   const triggerShockwave = useCallback(
@@ -42,7 +45,6 @@ export function useGalaxyScene(
     if (!host) return;
     let mounted = true;
     const app = new Application();
-    appRef.current = app;
     const sprites = spritesRef.current;
 
     let resizeObserver: ResizeObserver | null = null;
@@ -80,10 +82,7 @@ export function useGalaxyScene(
         app.canvas.style.display = "block";
         app.canvas.style.touchAction = "none";
 
-        let cx = initialWidth / 2;
-        let cy = initialHeight / 2;
-        // Screen-filling major radius (spans ~88% of container width/height)
-        let maxRadius = Math.max(initialWidth * 0.44, initialHeight * 0.72);
+        let { cx, cy, maxRadius } = calculateGalaxyLayout(initialWidth, initialHeight);
 
         const world = new Container();
         app.stage.addChild(world);
@@ -114,6 +113,10 @@ export function useGalaxyScene(
         coreContainer.addChild(drawSingularityCore(cx, cy));
         world.addChild(coreContainer);
 
+        const lensing = new Lensing();
+        lensingRef.current = lensing;
+        world.addChild(lensing.container);
+
         // Layer 6: Dynamic Shockwave & Nova Ripples
         const shockwaves = new ShockwaveSystem();
         shockwavesRef.current = shockwaves;
@@ -128,21 +131,27 @@ export function useGalaxyScene(
         const starNodes: Array<{ id: string; x: number; y: number; rank: number; isHovered: boolean }> =
           [];
 
+        let lastReportedZoom = viewport.scale;
         app.ticker.add((ticker) => {
-          const delta = ticker.deltaTime * (speedRef.current ?? 1);
-          viewport.tick(delta);
-          setCurrentZoom(viewport.scale);
+          const frameDelta = ticker.deltaTime;
+          const animationDelta = frameDelta * (speedRef.current ?? 1);
+          viewport.tick(frameDelta);
+          if (Math.abs(viewport.scale - lastReportedZoom) > 0.005) {
+            lastReportedZoom = viewport.scale;
+            setCurrentZoom(viewport.scale);
+          }
           if (pausedRef.current) return;
 
-          dust.tick(delta, cx, cy, maxRadius);
-          shockwaves.tick(delta);
+          if (lod === "full") dust.tick(animationDelta, cx, cy, maxRadius);
+          lensing.tick(animationDelta, cx, cy);
+          shockwaves.tick(animationDelta);
 
           starNodes.length = 0;
           let hoveredStarId: string | null = null;
 
           sprites?.forEach((sprite, id) => {
-            const pt = sprite.tick(delta, cx, cy);
-            trails.recordPoint(id, pt.x, pt.y);
+            const pt = sprite.tick(animationDelta, cx, cy);
+            if (lod === "full" && sprite.rank < 30) trails.recordPoint(id, pt.x, pt.y);
 
             const color =
               sprite.rank === 0
@@ -158,7 +167,7 @@ export function useGalaxyScene(
             starNodes.push({ id, x: pt.x, y: pt.y, rank: sprite.rank, isHovered: sprite.isHovered });
           });
 
-          trails.renderTrails(tierColors);
+          if (lod === "full") trails.renderTrails(tierColors);
           constellation.renderLinks(starNodes, hoveredStarId);
         });
 
@@ -170,8 +179,16 @@ export function useGalaxyScene(
               app.renderer.resize(width, height);
               cx = width / 2;
               cy = height / 2;
-              maxRadius = Math.max(width * 0.44, height * 0.72);
+              const layout = calculateGalaxyLayout(width, height);
+              cx = layout.cx;
+              cy = layout.cy;
+              maxRadius = layout.maxRadius;
               viewport.updateCenter(cx, cy, 1.0);
+              const population = Array.from(sprites ?? [], ([, sprite]) => sprite.star);
+              sprites?.forEach((sprite) => {
+                sprite.updateLayout(maxRadius);
+                sprite.updatePopulation(population);
+              });
 
               // Redraw background guides with new dimensions
               guidesContainer.removeChildren();
@@ -213,6 +230,7 @@ export function useGalaxyScene(
 
         app.canvas.addEventListener("wheel", onWheel, { passive: false });
         app.canvas.addEventListener("pointerdown", onPointerDown);
+        app.canvas.addEventListener("pointerdown", (e) => app.canvas.setPointerCapture(e.pointerId));
         window.addEventListener("pointermove", onPointerMove);
         window.addEventListener("pointerup", onPointerUp);
         window.addEventListener("pointercancel", onPointerUp);
@@ -225,6 +243,9 @@ export function useGalaxyScene(
       mounted = false;
       setIsReady(false);
       if (resizeObserver) resizeObserver.disconnect();
+      if (onWheel) app.canvas.removeEventListener("wheel", onWheel);
+      if (onPointerDown) app.canvas.removeEventListener("pointerdown", onPointerDown);
+      if (onDblClick) app.canvas.removeEventListener("dblclick", onDblClick);
       if (onPointerMove) window.removeEventListener("pointermove", onPointerMove);
       if (onPointerUp) {
         window.removeEventListener("pointerup", onPointerUp);
@@ -235,11 +256,11 @@ export function useGalaxyScene(
       trailsRef.current?.destroy();
       shockwavesRef.current?.destroy();
       constellationRef.current?.destroy();
+      lensingRef.current?.destroy();
       starContainerRef.current = null;
       app.destroy(true, { children: true });
-      appRef.current = null;
     };
-  }, [hostRef, spritesRef, trailsRef, viewportRef, pausedRef, speedRef]);
+  }, [hostRef, spritesRef, trailsRef, viewportRef, pausedRef, speedRef, lod]);
 
   // Update filter highlights on sprites
   useEffect(() => {
@@ -265,5 +286,15 @@ export function useGalaxyScene(
     });
   }, [spritesRef, filterTier, searchQuery]);
 
-  return { appRef, currentZoom, triggerShockwave, isReady, starContainerRef };
+  const resetCamera = useCallback(() => viewportRef.current?.reset(), [viewportRef]);
+  const focusCameraOn = useCallback(
+    (starId: string, zoom = 1.8) => {
+      const sprite = spritesRef.current.get(starId);
+      const position = sprite?.getWorldPosition();
+      if (position) viewportRef.current?.focusOn(position.x, position.y, zoom);
+    },
+    [spritesRef, viewportRef],
+  );
+
+  return { currentZoom, triggerShockwave, isReady, starContainerRef, resetCamera, focusCameraOn };
 }

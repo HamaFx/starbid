@@ -3,13 +3,12 @@
 import { useGalaxyStore } from "@/lib/store/galaxyStore";
 import { minimumSingularityTotalCents } from "@/lib/math/rankTargets";
 import type { Star } from "@/lib/types";
+import { rankActiveStars } from "@/lib/math/galaxyLayout";
 
 export function AccretionStats({ initialStars = [] }: { initialStars?: Star[] }) {
   const storeStars = useGalaxyStore((state) => state.stars);
   const stars = storeStars.length ? storeStars : initialStars;
-  const active = stars
-    .filter((s) => s.status === "active")
-    .sort((a, b) => b.totalBidCents - a.totalBidCents);
+  const active = rankActiveStars(stars);
 
   const totalGravityCents = active.reduce((sum, s) => sum + s.totalBidCents, 0);
   const leader = active[0];

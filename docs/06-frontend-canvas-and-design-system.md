@@ -1,150 +1,87 @@
 # Frontend: Canvas Rendering & Design System
 
 ## Rendering stack
-- **PixiJS v8** (WebGL/WebGPU auto-detect), mounted inside a single
-  `<GalaxyCanvas />` client component that owns the Pixi `Application`
-  lifecycle and nothing else.
-- **Zustand** store (`lib/store/galaxyStore.ts`) holds the authoritative
-  client-side star list. Supabase Realtime events mutate the store; a
-  `requestAnimationFrame` loop reads from the store and drives sprite
-  transforms. Rendering is fully decoupled from network events — the
-  store doesn't know Pixi exists, and Pixi doesn't know Supabase exists.
-- **Texture atlas**: logos are fetched once, drawn into an offscreen
-  canvas, batched into a Pixi `Spritesheet` — minimizes draw calls/texture
-  swaps as star count grows.
-- **Sprite pooling**: sprites are never destroyed/recreated on update —
-  existing sprites have `.position` / `.scale` / `.alpha` mutated; removed
-  stars return their sprite to a pool for reuse.
+- **PixiJS v8** is mounted by the client-side `GalaxyCanvas` through
+  `useGalaxyScene`.
+- **Zustand** owns the client-side star list and recent realtime events.
+  Supabase events update the store; Pixi reads the current store-backed
+  sprite collection during its ticker loop.
+- Star visuals currently use lightweight Pixi `Graphics` and `Text` objects.
+  Bid updates reuse existing star containers. Texture atlasing and a full
+  sprite pool remain optional future optimizations.
 
-## File boundaries (no god files, per architecture doc)
+## Current file boundaries
 ```
 components/galaxy/
-  GalaxyCanvas.tsx        → mounts Pixi Application, owns ticker loop only (~100 lines)
-  StarSprite.ts           → one class: create/update/destroy a single star's sprite
-  SpritePool.ts           → acquire/release pooled sprites
-  useOrbitTween.ts         → hook: eases radius/size changes over ~2s
-  useLOD.ts                → hook: decides particle/glow tier per star rank
-  Ticker.tsx               → the scrolling bid-events feed (separate from canvas)
-  Lensing.ts               → the singularity chromatic-aberration shader, isolated
+  GalaxyCanvas.tsx        → React/Pixi bridge, controls, hover telemetry
+  useGalaxyScene.ts       → Pixi lifecycle, ticker, resize, LOD, input wiring
+  StarSprite.ts           → one star's rendering, orbit, sizing, and state
+  GalaxyViewport.ts       → pan, zoom, pinch, momentum, focus, reset
+  OrbitTrails.ts          → bounded star trail buffers
+  AmbientDust.ts          → ambient particles
+  ConstellationWeb.ts     → bounded top-star links
+  ShockwaveSystem.ts      → event/click wave effects
+  useLOD.ts               → reduced-motion and low-end classification
+  Ticker.tsx              → activity feed
+lib/math/
+  galaxyLayout.ts         → shared layout, projection, ranking, normalization
+  orbit.ts                → orbital velocity and base math
 lib/store/
-  galaxyStore.ts           → Zustand store: star list + selectors only
-  realtimeSync.ts          → subscribes to Supabase Realtime, dispatches to store
-lib/math/orbit.ts          → pure formulas (already defined in doc 05), imported here
-components/dashboard/
-  MyStarsList.tsx
-  StarFuelPanel.tsx
-  ClaimTokenStorage.ts      → localStorage read/write helpers, isolated for testability
-components/ui/
-  Button.tsx, Ticker Row.tsx, Badge.tsx, MonoStat.tsx, etc. — design system primitives
+  galaxyStore.ts          → star state, realtime events, refresh merging
+  realtimeSync.ts         → Supabase Realtime subscription and fallback refresh
 ```
-Each file has one job; `GalaxyCanvas.tsx` in particular is kept intentionally
-thin — it should never contain business logic, only "start the render
-loop, read from store, draw."
 
-## Performance budget
-- Target: steady 60fps up to ~200–300 concurrent active stars on mid-range
-  hardware; graceful degradation beyond that. (Original 500 target was
-  aspirational; real mid-range mobile + Pixi v8 + logo textures is closer
-  to 200–300 before LOD must become aggressive.)
-- **LOD system** (`useLOD.ts`): particle trails/glow rendered only for the
-  top ~30 stars (Photon Ring + Singularity, per `zone_snapshots`). Outer
-  Rim stars render as plain static dots — both a performance optimization
-  and a correct design signal (visual prominence scales with spend).
-- Low-end device detection (`navigator.hardwareConcurrency`, or a 1-second
-  FPS probe on mount) auto-downgrades: disable particles → cap 30fps →
-  fall back entirely to the list view (see below).
-- **Accessibility/SEO fallback**: a plain HTML sortable table (`/leaderboard`
-  and an in-page "list view" toggle) showing rank, name, total, link, and
-  outbound click count — not a nice-to-have; this is also the crawlable
-  rendering path since the canvas itself is invisible to search engines.
+## Coordinate and layout model
 
-## Design system — thermal accretion-disk palette
-Grounded in real astrophysics (blackbody temperature gradient), not a
-generic "space gradient" — deliberately avoids the purple/blue AI-slop
-default.
+The galaxy uses a shared responsive layout. The orbit is an ellipse projected
+with `GALAXY_Y_SCALE = 0.62`. The maximum radius is constrained by both the
+canvas width and the projected canvas height, preventing narrow/tall viewport
+clipping.
 
-```
-Background (void):     #05050A → #0A0A14
-Outer Rim glow:         #7A2E1D
-Mid Disk glow:          #FF6B35
-Inner Disk glow:        #FFB627
-Photon Ring / core:     #FFF4E0 → #FFFFFF
-UI accent (chrome only, never inside the galaxy itself): #4CC9F0
-Positive/rank-up:       #4ADE80
-Negative/rank-down:     #F43F5E
-```
-Defined once as CSS variables + a `tailwind.config` token extension —
-never hardcoded hex values scattered across components.
+Stars are ranked by stable total gravity, entry time, and ID tie-breakers.
+Their orbit radii use normalized logarithmic bids so the distribution remains
+usable as the product's absolute bid range grows. World positions are converted
+to screen positions for HTML overlays and audio panning.
 
-## Typography
-- Display/headers: **Space Grotesk**
-- Body/UI: **Geist**
-- All numeric values (bids, ranks, countdowns, timestamps): **JetBrains
-  Mono** — every dollar figure and rank number renders monospace,
-  reinforcing an "exchange terminal" feel over a marketing site.
+## Performance and LOD
 
-## Motion principles
-- Continuous `requestAnimationFrame`-driven orbits — never CSS keyframes.
-- Rank/position changes tween ~2s via `ease-out-expo` (`useOrbitTween.ts`)
-  — heavy, decisive, "has mass." Avoid springy/bouncy easing everywhere
-  (a common generic-AI-design tell).
-- Chromatic aberration / lensing distortion (`Lensing.ts`) is scoped
-  **only** to the Singularity — cheap, on-theme (real gravitational
-  lensing bends light near black holes), rare enough to stay a "wow"
-  moment instead of visual noise.
+- Full mode renders ambient dust and records trails for the top 30 stars.
+- Reduced mode is selected for `prefers-reduced-motion` users and devices with
+  two or fewer hardware-concurrency units. It disables ambient dust and limits
+  trail work while retaining interactive stars and camera controls.
+- The responsive wrapper defaults to list view below 768px while allowing an
+  explicit canvas toggle on capable devices.
+- Constellation comparisons are bounded to the top 30 stars.
+- Trail buffers are bounded to 22 points per star.
+- React zoom state is throttled and is not updated on every ticker frame.
 
-## Key pages
-- `/` — the galaxy canvas itself (the homepage). Docked, collapsible side
-  panel = leaderboard. Top/bottom ticker strip (mono font) shows recent
-  `bid_events`: `NOVA_LABS moved to Photon Ring — $86.25 total →` — this
-  is the social-proof engine, reads like a stock ticker.
-- `/star/[id]` — public project page, SSR, indexable: logo, link, rank
-  history chart (built from `bid_events`), current standing, **outbound
-  click count**, and the live cost-to-rank calculator ("Add $X to take
-  Singularity").
-- `/star/[id]/manage?key=...` — claim-token-gated dashboard (`noindex`):
-  add fuel (opens checkout overlay) with prominent cost-to-rank
-  calculator and presets, edit logo/link, view own history + clicks,
-  export claim link.
-- `/leaderboard` — SSR, indexable, plain sortable table (rank, name,
-  total, clicks) — primary SEO surface since the canvas itself can't be
-  crawled.
-- `/create` — new star flow: form → Turnstile → checkout overlay →
-  confirming state → **non-dismissible success screen** showing the
-  manage link + "I saved it" + one-click export.
-- `/recover` — email-based claim-link recovery (doc 03).
-- `/dashboard` — "My Stars" from localStorage + live data; includes
-  "Export all claim links" and per-star fuel panels with calculator.
+Texture atlasing, sprite pooling, FPS probes, and a dedicated lensing shader
+are not currently required for correctness and remain future optimization or
+visual-polish work.
 
-## Click tracking
-Outbound clicks are counted via a lightweight redirect or beacon
-endpoint (`/api/click/[starId]`) that increments a counter (or appends
-to a small events table) before sending the user to the project URL.
-Counts are public on `/star/[id]` and `/leaderboard` and visible to the
-owner on the manage page. One count per visitor per star per day is
-sufficient; no PII stored.
+## Interaction model
 
-## Checkout overlay integration point
-`components/checkout/CheckoutOverlay.tsx` is the only component allowed to
-touch `window.LemonSqueezy` — every other component that needs to trigger
-a purchase calls a prop/callback into this component rather than importing
-Lemon.js directly. Keeps the payment SDK's global-script quirks contained
-to one file.
+- Mouse wheel and trackpad pinch zoom around the pointer/midpoint.
+- Two-finger movement preserves midpoint translation.
+- Pointer capture prevents drag loss when a pointer leaves the canvas.
+- Double-click toggles between overview and focused zoom.
+- Camera reset is available from the canvas controls and command palette.
+- Selecting a star can focus the camera before opening its preview modal.
 
-## Mobile strategy
-Default to the list/leaderboard view on small viewports, with an explicit
-"View Galaxy" toggle that lazy-loads the Pixi canvas — never force a heavy
-WebGL scene as the default mobile experience. The cost-to-rank calculator
-and fuel CTAs must remain fully usable in the list view.
+## Data synchronization
 
-## Founding Star visual treatment
-Stars with the Founding badge (`projects.verified` or a dedicated
-`is_founding` flag) receive a distinct, permanent visual flair in both
-the canvas (subtle gold/thermal rim or icon) and the list/leaderboard
-(small "Founding" badge). This is free status, not a paid tier — used
-as the primary non-monetary acquisition tool for the first 50 external
-creators (see doc 08).
+Realtime events immediately update the local store. Fallback refreshes merge
+with local state instead of blindly replacing it, preserving stars and newer
+local events when a refresh snapshot is stale or incomplete.
 
-## Design references (study, don't copy)
-Stripe dark-mode marketing pages, Linear's app chrome, Arc browser's
-motion language, real NASA/ESA/JWST imagery — not sci-fi movie renders.
+The server currently does not expose a dedicated sequence number in the public
+realtime payload. Timestamp ordering is used where available; adding a server
+sequence/version is the next step if strict cross-client event ordering becomes
+necessary.
+
+## Design and accessibility
+
+The list view remains the accessible/indexable representation of the galaxy.
+Demo stars have distinct canvas treatment and labels, while founding stars use
+a permanent gold treatment. Numeric values use monospace styling and the canvas
+is marked as an interactive application.

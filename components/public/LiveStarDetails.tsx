@@ -4,12 +4,11 @@ import { useState } from "react";
 import type { Star } from "@/lib/types";
 import { ReportStarForm } from "@/components/public/ReportStarForm";
 import { CostToRank } from "@/components/public/CostToRank";
+import { rankActiveStars } from "@/lib/math/galaxyLayout";
 
 export function LiveStarDetails({ star, stars = [star] }: { star: Star; stars?: Star[] }) {
   const [copied, setCopied] = useState(false);
-  const active = stars
-    .filter((s) => s.status === "active")
-    .sort((a, b) => b.totalBidCents - a.totalBidCents);
+  const active = rankActiveStars(stars);
   const rank = active.findIndex((s) => s.id === star.id) + 1;
   const rankDisplay = rank > 0 ? `#${rank}` : "UNRANKED";
 

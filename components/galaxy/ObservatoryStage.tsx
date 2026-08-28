@@ -6,7 +6,6 @@ import { GalaxyCanvas } from "@/components/galaxy/GalaxyCanvas";
 import { GalaxyListView } from "@/components/galaxy/GalaxyListView";
 import { ObservatoryHUD, type FilterTier } from "@/components/galaxy/ObservatoryHUD";
 import { FloatingTicker } from "@/components/galaxy/FloatingTicker";
-import { SectorMinimap } from "@/components/galaxy/SectorMinimap";
 import { LeaderboardDrawer } from "@/components/galaxy/LeaderboardDrawer";
 import { StarPreviewModal } from "@/components/galaxy/StarPreviewModal";
 import { CommandPalette } from "@/components/galaxy/CommandPalette";
@@ -15,6 +14,7 @@ import { createSupabaseBrowserClient } from "@/lib/db/browserClient";
 import { listPublicStars } from "@/lib/db/stars";
 import { subscribeToGalaxy } from "@/lib/db/realtimeSync";
 import type { Star } from "@/lib/types";
+import { rankActiveStars } from "@/lib/math/galaxyLayout";
 
 export function ObservatoryStage({ initialStars = [] }: { initialStars?: Star[] }) {
   const stars = useGalaxyStore((state) => state.stars);
@@ -26,6 +26,10 @@ export function ObservatoryStage({ initialStars = [] }: { initialStars?: Star[] 
   const [leaderboardOpen, setLeaderboardOpen] = useState(false);
   const [paletteOpen, setPaletteOpen] = useState(false);
   const [selectedStar, setSelectedStar] = useState<{ star: Star; rank: number } | null>(null);
+  const cameraActionsRef = useRef<{
+    resetCamera: () => void;
+    focusCameraOn: (starId: string, zoom?: number) => void;
+  } | null>(null);
 
   const initialStarsRef = useRef(initialStars);
 
@@ -34,15 +38,13 @@ export function ObservatoryStage({ initialStars = [] }: { initialStars?: Star[] 
     setStars(initialStarsRef.current);
     if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) return;
     const client = createSupabaseBrowserClient();
-    void listPublicStars(client).then((live) => { if (!cancelled && live.length) setStars(live); });
+    void listPublicStars(client).then((live) => { if (!cancelled && live.length) useGalaxyStore.getState().mergeStars(live); });
     const unsubscribe = subscribeToGalaxy(client);
     return () => { cancelled = true; unsubscribe(); };
   }, [setStars]);
 
   const currentStars = stars.length ? stars : initialStars;
-  const activeList = useMemo(() => {
-    return [...currentStars].filter((s) => s.status === "active").sort((a, b) => b.totalBidCents - a.totalBidCents);
-  }, [currentStars]);
+  const activeList = useMemo(() => rankActiveStars(currentStars), [currentStars]);
 
   const cycleStar = useCallback((offset: number) => {
     if (!activeList.length) return;
@@ -90,7 +92,15 @@ export function ObservatoryStage({ initialStars = [] }: { initialStars?: Star[] 
       <div className="relative flex-1 min-h-0 w-full bg-[#07070b]">
         {view === "galaxy" ? (
           <div className="h-full w-full min-h-0">
-            <GalaxyCanvas stars={currentStars} filterTier={filterTier} searchQuery={searchQuery} onSelectStar={(star, rank) => setSelectedStar({ star, rank })} />
+            <GalaxyCanvas
+              stars={currentStars}
+              filterTier={filterTier}
+              searchQuery={searchQuery}
+              onSelectStar={(star, rank) => setSelectedStar({ star, rank })}
+              onSceneReady={(actions) => {
+                cameraActionsRef.current = actions;
+              }}
+            />
           </div>
         ) : (
           <div className="mx-auto max-w-4xl p-4 sm:p-6">
@@ -102,13 +112,12 @@ export function ObservatoryStage({ initialStars = [] }: { initialStars?: Star[] 
       <div className="pointer-events-none absolute bottom-14 left-2.5 right-2.5 z-20 flex flex-wrap items-end justify-between gap-2 sm:bottom-3 sm:left-3 sm:right-3">
         <div className="flex items-center gap-2 max-w-full overflow-hidden">
           <FloatingTicker initialStars={currentStars} />
-          <SectorMinimap stars={currentStars} onFocusStar={(s) => setSelectedStar({ star: s, rank: 1 })} />
         </div>
       </div>
 
       <LeaderboardDrawer stars={currentStars} open={leaderboardOpen} onClose={() => setLeaderboardOpen(false)} onSelectStar={(star, rank) => setSelectedStar({ star, rank })} />
       <StarPreviewModal star={selectedStar?.star ?? null} rank={selectedStar?.rank ?? 1} onClose={() => setSelectedStar(null)} onNextStar={() => cycleStar(1)} onPrevStar={() => cycleStar(-1)} />
-      <CommandPalette stars={currentStars} open={paletteOpen} onClose={() => setPaletteOpen(false)} onSelectStar={(star, rank) => setSelectedStar({ star, rank })} onToggleView={() => setView((v) => (v === "galaxy" ? "list" : "galaxy"))} onResetCamera={() => {}} />
+      <CommandPalette stars={currentStars} open={paletteOpen} onClose={() => setPaletteOpen(false)} onSelectStar={(star, rank) => setSelectedStar({ star, rank })} onToggleView={() => setView((v) => (v === "galaxy" ? "list" : "galaxy"))} onResetCamera={() => cameraActionsRef.current?.resetCamera()} />
     </div>
   );
 }

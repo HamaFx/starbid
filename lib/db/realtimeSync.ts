@@ -30,7 +30,7 @@ export function subscribeToGalaxy(client: SupabaseClient<Database>): () => void 
 
 async function refreshGalaxy(client: SupabaseClient<Database>): Promise<void> {
   const { data, error } = await client.rpc("list_public_stars");
-  if (!error && data) useGalaxyStore.getState().setStars(data.map((row) => ({
+  if (!error && data) useGalaxyStore.getState().mergeStars(data.map((row) => ({
     id: row.star_id,
     projectId: row.project_id,
     name: row.name,
@@ -51,5 +51,6 @@ function parseGalaxyEvent(payload: Record<string, unknown>): GalaxyEvent | null 
   if (typeof payload.star_id !== "string" || typeof payload.total_bid_cents !== "number" || typeof payload.event_type !== "string" || typeof payload.name !== "string") return null;
   if (!["spawn", "fuel", "singularity_takeover"].includes(payload.event_type)) return null;
   const timestamp = typeof payload.timestamp === "string" ? payload.timestamp : typeof payload.created_at === "string" ? payload.created_at : undefined;
-  return { starId: payload.star_id, totalBidCents: payload.total_bid_cents, eventType: payload.event_type as GalaxyEvent["eventType"], name: payload.name, timestamp };
+  const sequence = typeof payload.sequence === "number" ? payload.sequence : undefined;
+  return { starId: payload.star_id, totalBidCents: payload.total_bid_cents, eventType: payload.event_type as GalaxyEvent["eventType"], name: payload.name, timestamp, sequence, receivedAt: Date.now() };
 }

@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState, useCallback, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { StarSprite } from "@/components/galaxy/StarSprite";
+import { StarSpritePool } from "@/components/galaxy/StarSpritePool";
 import { useGalaxyScene, BASE_WIDTH, BASE_HEIGHT } from "@/components/galaxy/useGalaxyScene";
 import { OrbitTrails } from "@/components/galaxy/OrbitTrails";
 import { GalaxyViewport } from "@/components/galaxy/GalaxyViewport";
@@ -10,23 +11,28 @@ import { CanvasControls } from "@/components/galaxy/CanvasControls";
 import { sound } from "@/components/galaxy/AudioFeedback";
 import { useGalaxyStore } from "@/lib/store/galaxyStore";
 import { radius } from "@/lib/math/orbit";
+import { calculateGalaxyLayout, rankActiveStars, worldToScreen } from "@/lib/math/galaxyLayout";
 import type { FilterTier } from "@/components/galaxy/ObservatoryHUD";
 import type { Star } from "@/lib/types";
+import { useLOD } from "@/components/galaxy/useLOD";
 
 export function GalaxyCanvas({
   stars,
   filterTier = "all",
   searchQuery = "",
   onSelectStar,
+  onSceneReady,
 }: {
   stars: Star[];
   filterTier?: FilterTier;
   searchQuery?: string;
   onSelectStar?: (star: Star, rank: number) => void;
+  onSceneReady?: (actions: { resetCamera: () => void; focusCameraOn: (starId: string, zoom?: number) => void }) => void;
 }) {
   const router = useRouter();
   const hostRef = useRef<HTMLDivElement>(null);
   const spritesRef = useRef<Map<string, StarSprite>>(new Map());
+  const spritePoolRef = useRef(new StarSpritePool());
   const trailsRef = useRef<OrbitTrails | null>(null);
   const viewportRef = useRef<GalaxyViewport | null>(null);
 
@@ -43,6 +49,8 @@ export function GalaxyCanvas({
 
   const [paused, setPaused] = useState(false);
   const [speed, setSpeed] = useState(1);
+  const lodMode = useLOD();
+  const lod = lodMode === "list" ? "reduced" : lodMode;
   const pausedRef = useRef(paused);
   const speedRef = useRef(speed);
 
@@ -51,7 +59,7 @@ export function GalaxyCanvas({
     speedRef.current = speed;
   }, [paused, speed]);
 
-  const { appRef, currentZoom, triggerShockwave, isReady, starContainerRef } = useGalaxyScene(
+  const { currentZoom, triggerShockwave, isReady, starContainerRef, resetCamera, focusCameraOn } = useGalaxyScene(
     hostRef,
     spritesRef,
     trailsRef,
@@ -59,31 +67,42 @@ export function GalaxyCanvas({
     pausedRef,
     speedRef,
     filterTier,
-    searchQuery
+    searchQuery,
+    lod,
   );
 
-  const activeSorted = useMemo(
-    () =>
-      [...stars]
-        .filter((s) => s.status === "active")
-        .sort((a, b) => b.totalBidCents - a.totalBidCents),
-    [stars]
-  );
+  const activeSorted = useMemo(() => rankActiveStars(stars), [stars]);
+
+  useEffect(() => () => spritePoolRef.current.clear(), []);
+
+  useEffect(() => {
+    onSceneReady?.({ resetCamera, focusCameraOn });
+  }, [focusCameraOn, onSceneReady, resetCamera]);
 
   const handleStarClick = useCallback(
     (star: Star) => {
       const sprite = spritesRef.current.get(star.id);
       const pos = sprite?.container.position;
-      const pan = pos ? (pos.x / BASE_WIDTH) * 2 - 1 : 0;
+      const host = hostRef.current;
+      const viewport = viewportRef.current;
+      const layout = calculateGalaxyLayout(
+        host?.clientWidth || BASE_WIDTH,
+        host?.clientHeight || BASE_HEIGHT,
+      );
+      const screenPos = pos && viewport
+        ? worldToScreen(pos, layout, viewport)
+        : pos;
+      const pan = screenPos ? (screenPos.x / layout.width) * 2 - 1 : 0;
       const rank = activeSorted.findIndex((s) => s.id === star.id) + 1;
 
       sound.playSelect(pan, rank > 0 ? rank : 1);
       if (pos) triggerShockwave(pos.x, pos.y, "click");
 
+      focusCameraOn(star.id, 1.55);
       if (onSelectStar) onSelectStar(star, rank > 0 ? rank : 1);
       else router.push(`/star/${encodeURIComponent(star.id)}`);
     },
-    [activeSorted, onSelectStar, router, triggerShockwave]
+    [activeSorted, focusCameraOn, onSelectStar, router, triggerShockwave]
   );
 
   const handleStarHover = useCallback(
@@ -92,14 +111,24 @@ export function GalaxyCanvas({
         setHovered(null);
         return;
       }
-      const pan = (x / BASE_WIDTH) * 2 - 1;
+      const host = hostRef.current;
+      const layout = calculateGalaxyLayout(
+        host?.clientWidth || BASE_WIDTH,
+        host?.clientHeight || BASE_HEIGHT,
+      );
+      const viewport = viewportRef.current;
+      const worldPos = spritesRef.current.get(star.id)?.getWorldPosition();
+      const screenPos = worldPos && viewport
+        ? worldToScreen(worldPos, layout, viewport)
+        : { x, y };
+      const pan = (screenPos.x / layout.width) * 2 - 1;
       sound.playTick(pan);
       const rank = activeSorted.findIndex((s) => s.id === star.id) + 1;
-      const totalDollars = star.totalBidCents / 100;
-      const r = radius(totalDollars, 500);
-      const au = ((r / 500) * 5.0).toFixed(2);
+      const sprite = spritesRef.current.get(star.id);
+      const r = sprite?.currentRadius ?? radius(star.totalBidCents / 100, layout.maxRadius);
+      const au = ((r / layout.maxRadius) * 5.0).toFixed(2);
       const orbitalSpeed = (350 / Math.sqrt(Math.max(10, r))).toFixed(1);
-      const angleDeg = Math.round(star.angleSeed % 360);
+      const angleDeg = Math.round(spritesRef.current.get(star.id)?.getBearingDegrees() ?? star.angleSeed % 360);
 
       const prevRankStar = rank > 1 ? activeSorted[rank - 2] : null;
       const deltaCents = prevRankStar
@@ -108,8 +137,8 @@ export function GalaxyCanvas({
 
       setHovered({
         star,
-        x,
-        y,
+        x: screenPos.x,
+        y: screenPos.y,
         rank: rank > 0 ? rank : 1,
         au,
         speed: orbitalSpeed,
@@ -156,7 +185,7 @@ export function GalaxyCanvas({
 
     const hostW = hostRef.current?.clientWidth || BASE_WIDTH;
     const hostH = hostRef.current?.clientHeight || BASE_HEIGHT;
-    const maxRadius = Math.max(hostW * 0.44, hostH * 0.72);
+    const maxRadius = calculateGalaxyLayout(hostW, hostH).maxRadius;
     const currentMap = spritesRef.current;
     const activeIds = new Set<string>();
 
@@ -164,12 +193,18 @@ export function GalaxyCanvas({
       activeIds.add(star.id);
       const existing = currentMap.get(star.id);
       if (existing) {
-        existing.updateData(star, index, maxRadius);
+        existing.updateData(star, index, maxRadius, activeSorted);
         if (existing.container.parent !== starContainer) {
           starContainer.addChild(existing.container);
         }
       } else {
-        const sprite = new StarSprite(star, index, maxRadius, handleStarClick, handleStarHover);
+        const sprite = spritePoolRef.current.acquire(
+          star,
+          index,
+          maxRadius,
+          { onClick: handleStarClick, onHover: handleStarHover },
+          activeSorted,
+        );
         currentMap.set(star.id, sprite);
         starContainer.addChild(sprite.container);
       }
@@ -180,7 +215,7 @@ export function GalaxyCanvas({
         if (sprite.container.parent === starContainer) {
           starContainer.removeChild(sprite.container);
         }
-        sprite.destroy();
+        spritePoolRef.current.release(sprite);
         trailsRef.current?.removeStar(id);
         currentMap.delete(id);
       }
@@ -228,7 +263,7 @@ export function GalaxyCanvas({
           }}
           onResetZoom={() => {
             sound.playTick();
-            viewportRef.current?.reset();
+            resetCamera();
           }}
         />
       </div>

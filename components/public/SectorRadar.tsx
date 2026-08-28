@@ -1,10 +1,9 @@
 import Link from "next/link";
 import type { Star } from "@/lib/types";
+import { rankActiveStars } from "@/lib/math/galaxyLayout";
 
 export function SectorRadar({ star, stars }: { star: Star; stars: Star[] }) {
-  const sorted = [...stars]
-    .filter((s) => s.status === "active")
-    .sort((a, b) => b.totalBidCents - a.totalBidCents || a.enteredAt.localeCompare(b.enteredAt));
+  const sorted = rankActiveStars(stars);
 
   const myIndex = sorted.findIndex((s) => s.id === star.id);
   const nextAbove = myIndex > 0 ? sorted[myIndex - 1] : null;
