@@ -2,15 +2,17 @@ function clamp(value: number, min: number, max: number): number {
   return Math.min(Math.max(value, min), max);
 }
 
-export function radius(totalBidDollars: number, rMax: number): number {
+export const GALAXY_MAX_RADIUS = 1800;
+
+export function radius(totalBidDollars: number, rMax = GALAXY_MAX_RADIUS): number {
   if (totalBidDollars < 0 || rMax < 0) {
     throw new Error("Orbit inputs must be non-negative");
   }
 
-  // Logarithmic radial distribution giving every orbital tier ample breathing room
-  const minRadius = rMax * 0.16;
-  const maxSpan = rMax * 0.76;
-  const decay = 1 / (1 + 0.38 * Math.log1p(totalBidDollars));
+  // Deep-space logarithmic radial distribution with massive capacity for hundreds of stars
+  const minRadius = rMax * 0.08;
+  const maxSpan = rMax * 0.88;
+  const decay = 1 / (1 + 0.32 * Math.log1p(totalBidDollars));
   return minRadius + maxSpan * decay;
 }
 

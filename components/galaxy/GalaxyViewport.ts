@@ -2,8 +2,9 @@ import { Container } from "pixi.js";
 
 export class GalaxyViewport {
   public world: Container;
-  public scale = 1;
-  public targetScale = 1;
+  public scale = 0.45;
+  public targetScale = 0.45;
+  public defaultScale = 0.45;
   public x = 0;
   public y = 0;
   public targetX = 0;
@@ -18,34 +19,41 @@ export class GalaxyViewport {
   private lastDragY = 0;
   private vx = 0;
   private vy = 0;
-  public minZoom = 0.35;
-  public maxZoom = 4.0;
+  public minZoom = 0.12;
+  public maxZoom = 4.5;
 
   // Multi-touch pinch tracking
   private activePointers = new Map<number, { x: number; y: number }>();
   private initialPinchDist = 0;
-  private initialPinchScale = 1;
+  private initialPinchScale = 0.45;
 
-  constructor(world: Container, cx: number, cy: number) {
+  constructor(world: Container, cx: number, cy: number, defaultScale = 0.45) {
     this.world = world;
     this.cx = cx;
     this.cy = cy;
+    this.defaultScale = defaultScale;
+    this.scale = defaultScale;
+    this.targetScale = defaultScale;
+
     // Set pivot to the Singularity Core
     this.world.pivot.set(cx, cy);
     this.world.position.set(cx, cy);
+    this.world.scale.set(defaultScale);
   }
 
-  public updateCenter(cx: number, cy: number) {
+  public updateCenter(cx: number, cy: number, defaultScale?: number) {
     this.cx = cx;
     this.cy = cy;
     this.world.pivot.set(cx, cy);
+    if (defaultScale !== undefined) {
+      this.defaultScale = defaultScale;
+    }
   }
 
   /**
    * Cursor-anchored smooth wheel & trackpad pinch zooming
    */
   public onWheel(deltaY: number, mouseX: number, mouseY: number, isPinch = false) {
-    // Determine zoom factor (finer precision for trackpad pinch gestures)
     const zoomStep = isPinch ? Math.exp(-deltaY * 0.015) : deltaY < 0 ? 1.15 : 0.87;
     const newTarget = Math.max(this.minZoom, Math.min(this.maxZoom, this.targetScale * zoomStep));
     if (newTarget === this.targetScale) return;
@@ -87,7 +95,6 @@ export class GalaxyViewport {
     this.activePointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
 
     if (this.activePointers.size === 2) {
-      // Handle multi-touch pinch-to-zoom
       const pts = Array.from(this.activePointers.values());
       const currentDist = Math.hypot(pts[0].x - pts[1].x, pts[0].y - pts[1].y);
       if (this.initialPinchDist > 0) {
@@ -139,13 +146,13 @@ export class GalaxyViewport {
   }
 
   /**
-   * Double-click/double-tap to toggle zoom
+   * Double-click/double-tap to toggle between zoomed sector view and cosmic overview
    */
   public onDoubleTap(mouseX: number, mouseY: number) {
-    if (this.targetScale > 1.3) {
+    if (this.targetScale > this.defaultScale * 1.5) {
       this.reset();
     } else {
-      const newTarget = 2.0;
+      const newTarget = this.defaultScale * 2.5;
       const wx = (mouseX - this.cx - this.targetX) / this.targetScale;
       const wy = (mouseY - this.cy - this.targetY) / this.targetScale;
 
@@ -156,15 +163,15 @@ export class GalaxyViewport {
   }
 
   public zoomIn() {
-    this.targetScale = Math.min(this.maxZoom, this.targetScale * 1.25);
+    this.targetScale = Math.min(this.maxZoom, this.targetScale * 1.3);
   }
 
   public zoomOut() {
-    this.targetScale = Math.max(this.minZoom, this.targetScale * 0.8);
+    this.targetScale = Math.max(this.minZoom, this.targetScale * 0.75);
   }
 
-  public focusOn(targetWorldX: number, targetWorldY: number, zoom = 1.8) {
-    this.targetScale = Math.min(this.maxZoom, Math.max(this.minZoom, zoom));
+  public focusOn(targetWorldX: number, targetWorldY: number, zoomMultiplier = 2.0) {
+    this.targetScale = Math.min(this.maxZoom, this.defaultScale * zoomMultiplier);
     this.targetX = (this.cx - targetWorldX) * this.targetScale;
     this.targetY = (this.cy - targetWorldY) * this.targetScale;
     this.vx = 0;
@@ -172,7 +179,7 @@ export class GalaxyViewport {
   }
 
   public reset() {
-    this.targetScale = 1;
+    this.targetScale = this.defaultScale;
     this.targetX = 0;
     this.targetY = 0;
     this.vx = 0;
@@ -180,7 +187,6 @@ export class GalaxyViewport {
   }
 
   public tick(delta: number) {
-    // Apply inertial drift
     if (!this.isDragging && this.activePointers.size === 0 && (Math.abs(this.vx) > 0.05 || Math.abs(this.vy) > 0.05)) {
       this.targetX += this.vx * delta;
       this.targetY += this.vy * delta;
@@ -189,7 +195,6 @@ export class GalaxyViewport {
       this.vy *= friction;
     }
 
-    // Spring damping ease to target position and scale
     const ease = 0.16 * Math.min(delta, 2);
     this.scale += (this.targetScale - this.scale) * ease;
     this.x += (this.targetX - this.x) * ease;

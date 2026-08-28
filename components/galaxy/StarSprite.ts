@@ -1,5 +1,5 @@
 import { Container, Graphics, Text } from "pixi.js";
-import { radius, angularVelocity } from "@/lib/math/orbit";
+import { radius, angularVelocity, GALAXY_MAX_RADIUS } from "@/lib/math/orbit";
 import type { Star } from "@/lib/types";
 
 export class StarSprite {
@@ -20,7 +20,7 @@ export class StarSprite {
   constructor(
     star: Star,
     rank: number,
-    maxRadius: number,
+    maxRadius = GALAXY_MAX_RADIUS,
     onClick: (star: Star) => void,
     onHover: (star: Star | null, x: number, y: number) => void
   ) {
@@ -54,27 +54,27 @@ export class StarSprite {
 
     // Dynamic Monospace Label
     this.label = new Text({
-      text: this.star.name.length > 12 ? `${this.star.name.slice(0, 11)}…` : this.star.name,
+      text: this.star.name.length > 13 ? `${this.star.name.slice(0, 12)}…` : this.star.name,
       style: {
         fontFamily: "monospace",
-        fontSize: this.rank === 0 ? 9.5 : 8,
+        fontSize: this.rank === 0 ? 16 : 13,
         fontWeight: this.rank === 0 ? "bold" : "normal",
         fill: this.getStarColor(),
       },
     });
     this.label.anchor.set(0.5, 0);
-    this.label.position.set(0, this.starSize + 3.5);
+    this.label.position.set(0, this.starSize + 6);
     this.container.addChild(this.label);
 
     this.redraw();
   }
 
   private calculateStarSize(): number {
-    if (this.rank === 0) return 8.0;   // #1 Core Star (crisp & prominent)
-    if (this.rank < 3) return 6.8;    // Ranks 2-3 (Photon Orbit)
-    if (this.rank < 7) return 5.5;    // Ranks 4-7 (Inner Orbit)
-    if (this.rank < 12) return 4.5;   // Ranks 8-12 (Mid Orbit)
-    return 3.8;                       // Outer Drift Stars
+    if (this.rank === 0) return 16.0;  // #1 Core Star (brilliant diamond)
+    if (this.rank < 3) return 13.0;   // Ranks 2-3 (Photon Orbit)
+    if (this.rank < 7) return 10.5;   // Ranks 4-7 (Inner Orbit)
+    if (this.rank < 12) return 8.5;   // Ranks 8-12 (Mid Orbit)
+    return 7.0;                       // Outer Drift Stars
   }
 
   private getStarColor(): number {
@@ -82,16 +82,16 @@ export class StarSprite {
     if (this.rank < 3) return 0x38bdf8;  // Celestial Cyan
     if (this.rank < 7) return 0xfbbf24;  // Solar Gold
     if (this.rank < 12) return 0xf97316; // Plasma Amber
-    return 0x67e8f9;                     // Ice Blue
+    return 0x67e8f9;                     // Electric Ice Blue
   }
 
-  public updateData(star: Star, rank: number, maxRadius: number) {
+  public updateData(star: Star, rank: number, maxRadius = GALAXY_MAX_RADIUS) {
     this.star = star;
     this.rank = rank;
     const totalDollars = star.totalBidCents / 100;
     this.targetRadius = radius(totalDollars, maxRadius);
     this.starSize = this.calculateStarSize();
-    this.label.text = this.star.name.length > 12 ? `${this.star.name.slice(0, 11)}…` : this.star.name;
+    this.label.text = this.star.name.length > 13 ? `${this.star.name.slice(0, 12)}…` : this.star.name;
     this.label.style.fill = this.getStarColor();
     this.redraw();
   }
@@ -113,37 +113,37 @@ export class StarSprite {
 
     // Focused / Hovered Target Reticle
     if (this.isFocused || this.isHovered) {
-      this.graphic.circle(0, 0, baseSize + 9).stroke({ color: 0x38bdf8, alpha: 0.85, width: 1.2 });
-      this.graphic.circle(0, 0, baseSize + 5).stroke({ color: 0xffffff, alpha: 0.6, width: 0.8 });
+      this.graphic.circle(0, 0, baseSize + 16).stroke({ color: 0x38bdf8, alpha: 0.85, width: 2.0 });
+      this.graphic.circle(0, 0, baseSize + 9).stroke({ color: 0xffffff, alpha: 0.6, width: 1.2 });
     }
 
     // Diffraction Spikes for top stars
     if ((isTop || isPhoton || this.isHovered) && !this.isDimmed) {
-      const spikeLen = baseSize * (isTop ? 2.4 : 1.7);
+      const spikeLen = baseSize * (isTop ? 2.6 : 1.8);
       this.graphic
         .moveTo(-spikeLen, 0)
         .lineTo(spikeLen, 0)
-        .stroke({ color: isTop ? 0xffffff : color, alpha: 0.4 * alphaMultiplier, width: 0.8 });
+        .stroke({ color: isTop ? 0xffffff : color, alpha: 0.45 * alphaMultiplier, width: 1.2 });
       this.graphic
         .moveTo(0, -spikeLen)
         .lineTo(0, spikeLen)
-        .stroke({ color: isTop ? 0xffffff : color, alpha: 0.4 * alphaMultiplier, width: 0.8 });
+        .stroke({ color: isTop ? 0xffffff : color, alpha: 0.45 * alphaMultiplier, width: 1.2 });
     }
 
-    // Luminous Corona Glow
+    // Luminous Corona Glow & Multi-layer Halos
     if (!this.isDimmed) {
       if (isTop) {
-        this.graphic.circle(0, 0, baseSize + 5).stroke({ color: 0x38bdf8, alpha: 0.5, width: 1.2 });
-        this.graphic.circle(0, 0, baseSize + 2.5).stroke({ color: 0xfbbf24, alpha: 0.6, width: 1 });
+        this.graphic.circle(0, 0, baseSize + 10).stroke({ color: 0x38bdf8, alpha: 0.55, width: 2.0 });
+        this.graphic.circle(0, 0, baseSize + 5).stroke({ color: 0xfbbf24, alpha: 0.7, width: 1.5 });
       } else if (isPhoton || isInner) {
-        this.graphic.circle(0, 0, baseSize + 3).stroke({ color, alpha: 0.45, width: 0.9 });
+        this.graphic.circle(0, 0, baseSize + 6).stroke({ color, alpha: 0.5, width: 1.5 });
       } else {
-        this.graphic.circle(0, 0, baseSize + 2).stroke({ color, alpha: 0.3, width: 0.6 });
+        this.graphic.circle(0, 0, baseSize + 4).stroke({ color, alpha: 0.4, width: 1.0 });
       }
 
-      // Founding Star Golden Ring
+      // Founding Star Permanent Golden Halo
       if (this.star.isFounding) {
-        this.graphic.circle(0, 0, baseSize + 3.5).stroke({ color: 0xfbbf24, alpha: 0.55, width: 0.8 });
+        this.graphic.circle(0, 0, baseSize + 8).stroke({ color: 0xfbbf24, alpha: 0.65, width: 1.4 });
       }
     }
 
@@ -153,18 +153,18 @@ export class StarSprite {
       alpha: 1.0 * alphaMultiplier,
     });
 
-    // Clean label visibility: ONLY show top 3 by default; show others on hover/focus to prevent clutter
+    // Clean label visibility: show top 3 by default, and show any on hover
     const showLabel = this.rank < 3 || this.isHovered || this.isFocused;
     this.label.visible = showLabel && !this.isDimmed;
     this.label.alpha = (this.isHovered ? 1.0 : this.rank === 0 ? 0.95 : 0.75) * alphaMultiplier;
-    this.label.position.set(0, baseSize + 3.5);
+    this.label.position.set(0, baseSize + 6);
   }
 
   public tick(delta: number, cx: number, cy: number): { x: number; y: number } {
     const ease = 0.045 * Math.min(delta, 2);
     this.currentRadius += (this.targetRadius - this.currentRadius) * ease;
 
-    const speed = angularVelocity(Math.max(10, this.currentRadius), 25);
+    const speed = angularVelocity(Math.max(10, this.currentRadius), 35);
     this.currentAngle += speed * 0.0006 * delta;
     this.pulsePhase += 0.03 * delta;
 

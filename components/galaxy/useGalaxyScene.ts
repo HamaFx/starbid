@@ -7,7 +7,9 @@ import { OrbitTrails } from "@/components/galaxy/OrbitTrails";
 import { GalaxyViewport } from "@/components/galaxy/GalaxyViewport";
 import { ShockwaveSystem } from "@/components/galaxy/ShockwaveSystem";
 import { ConstellationWeb } from "@/components/galaxy/ConstellationWeb";
+import { GALAXY_MAX_RADIUS } from "@/lib/math/orbit";
 import type { FilterTier } from "@/components/galaxy/ObservatoryHUD";
+import type { Star } from "@/lib/types";
 import type { StarSprite } from "@/components/galaxy/StarSprite";
 
 export const BASE_WIDTH = 1200;
@@ -70,7 +72,6 @@ export function useGalaxyScene(
           return;
         }
 
-        // Clean out any stale canvas in host
         while (hostRef.current.firstChild) {
           hostRef.current.removeChild(hostRef.current.firstChild);
         }
@@ -83,18 +84,24 @@ export function useGalaxyScene(
 
         let cx = initialWidth / 2;
         let cy = initialHeight / 2;
-        const maxRadius = Math.min(initialWidth, initialHeight) * 0.42;
+        const maxRadius = GALAXY_MAX_RADIUS;
+
+        // Calculate overview default scale to fit the supermassive galaxy nicely inside the container
+        const defaultScale = Math.min(
+          initialWidth / (maxRadius * 2.3),
+          initialHeight / (maxRadius * 1.35)
+        );
 
         const world = new Container();
         app.stage.addChild(world);
-        const viewport = new GalaxyViewport(world, cx, cy);
+        const viewport = new GalaxyViewport(world, cx, cy, defaultScale);
         viewportRef.current = viewport;
 
-        // Layer 1: Coordinate Grid & Accretion Guides
+        // Layer 1: Coordinate Grid & Supermassive Accretion Guides
         world.addChild(drawAccretionGuides(cx, cy, maxRadius));
 
-        // Layer 2: Ambient Relativistic Accretion Gas Particles
-        const dust = new AmbientDust(160, maxRadius);
+        // Layer 2: Ambient Relativistic Accretion Gas Particles (320 particles across 1800px)
+        const dust = new AmbientDust(320, maxRadius);
         world.addChild(dust.container);
 
         // Layer 3: Gravitational Constellation Filaments
@@ -107,7 +114,7 @@ export function useGalaxyScene(
         trailsRef.current = trails;
         world.addChild(trails.container);
 
-        // Layer 5: Singularity Core & Photon Sphere
+        // Layer 5: Supermassive Singularity Core & Photon Sphere
         world.addChild(drawSingularityCore(cx, cy));
 
         // Layer 6: Dynamic Shockwave & Nova Ripples
@@ -115,7 +122,7 @@ export function useGalaxyScene(
         shockwavesRef.current = shockwaves;
         world.addChild(shockwaves.container);
 
-        // Layer 7: Star Sprites Dedicated Display Container
+        // Layer 7: Star Sprites Display Container
         const starContainer = new Container();
         world.addChild(starContainer);
         starContainerRef.current = starContainer;
@@ -127,7 +134,7 @@ export function useGalaxyScene(
         app.ticker.add((ticker) => {
           const delta = ticker.deltaTime * (speedRef.current ?? 1);
           viewport.tick(delta);
-          setCurrentZoom(viewport.scale);
+          setCurrentZoom(viewport.scale / viewport.defaultScale);
           if (pausedRef.current) return;
 
           dust.tick(delta, cx, cy, maxRadius);
@@ -147,8 +154,8 @@ export function useGalaxyScene(
                 ? 0xfbbf24
                 : sprite.rank < 8
                 ? 0xf97316
-                : 0x71717a;
-            tierColors.set(id, { color, alpha: sprite.rank < 3 ? 0.38 : 0.20 });
+                : 0x67e8f9;
+            tierColors.set(id, { color, alpha: sprite.rank < 3 ? 0.45 : 0.22 });
 
             if (sprite.isHovered) hoveredStarId = id;
             starNodes.push({ id, x: pt.x, y: pt.y, rank: sprite.rank, isHovered: sprite.isHovered });
@@ -166,7 +173,11 @@ export function useGalaxyScene(
               app.renderer.resize(width, height);
               cx = width / 2;
               cy = height / 2;
-              viewport.updateCenter(cx, cy);
+              const newDefaultScale = Math.min(
+                width / (maxRadius * 2.3),
+                height / (maxRadius * 1.35)
+              );
+              viewport.updateCenter(cx, cy, newDefaultScale);
             }
           }
         });

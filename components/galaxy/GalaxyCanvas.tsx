@@ -9,7 +9,7 @@ import { GalaxyViewport } from "@/components/galaxy/GalaxyViewport";
 import { CanvasControls } from "@/components/galaxy/CanvasControls";
 import { sound } from "@/components/galaxy/AudioFeedback";
 import { useGalaxyStore } from "@/lib/store/galaxyStore";
-import { radius } from "@/lib/math/orbit";
+import { radius, GALAXY_MAX_RADIUS } from "@/lib/math/orbit";
 import type { FilterTier } from "@/components/galaxy/ObservatoryHUD";
 import type { Star } from "@/lib/types";
 
@@ -96,8 +96,8 @@ export function GalaxyCanvas({
       sound.playTick(pan);
       const rank = activeSorted.findIndex((s) => s.id === star.id) + 1;
       const totalDollars = star.totalBidCents / 100;
-      const r = radius(totalDollars, 320);
-      const au = ((r / 320) * 5.0).toFixed(2);
+      const r = radius(totalDollars, GALAXY_MAX_RADIUS);
+      const au = ((r / GALAXY_MAX_RADIUS) * 5.0).toFixed(2);
       const orbitalSpeed = (350 / Math.sqrt(Math.max(10, r))).toFixed(1);
       const angleDeg = Math.round(star.angleSeed % 360);
 
@@ -154,9 +154,7 @@ export function GalaxyCanvas({
     const starContainer = starContainerRef.current;
     if (!isReady || !starContainer) return;
 
-    const hostW = hostRef.current?.clientWidth || BASE_WIDTH;
-    const hostH = hostRef.current?.clientHeight || BASE_HEIGHT;
-    const maxRadius = Math.min(hostW, hostH) * 0.42;
+    const maxRadius = GALAXY_MAX_RADIUS;
     const currentMap = spritesRef.current;
     const activeIds = new Set<string>();
 
